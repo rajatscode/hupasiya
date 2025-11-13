@@ -2,9 +2,9 @@
 name = "hupasiya"
 version = "0.1.0"
 edition = "2021"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["code@rajats.site"]
 description = "Multi-agent session orchestrator built on top of hannahanna"
-repository = "https://github.com/yourorg/hupasiya"
+repository = "https://github.com/rajatscode/hupasiya"
 license = "MIT"
 keywords = ["cli", "development", "git", "ai", "orchestration"]
 categories = ["command-line-utilities", "development-tools"]
