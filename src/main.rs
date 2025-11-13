@@ -9,6 +9,7 @@ mod error;
 mod hn_client;
 mod models;
 mod orchestration;
+mod pr;
 mod session;
 
 /// hupasiya - Multi-agent session orchestrator

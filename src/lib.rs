@@ -11,6 +11,7 @@ pub mod error;
 pub mod hn_client;
 pub mod models;
 pub mod orchestration;
+pub mod pr;
 pub mod session;
 
 pub use error::{Error, Result};
