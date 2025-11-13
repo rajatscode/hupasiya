@@ -22,6 +22,7 @@ pub mod profiles;
 pub mod session;
 pub mod shepherd;
 pub mod templates;
+pub mod tutorial;
 pub mod utilities;
 
 pub use error::{Error, Result};

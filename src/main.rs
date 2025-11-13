@@ -15,6 +15,7 @@ mod models;
 mod orchestration;
 mod pr;
 mod session;
+mod tutorial;
 
 /// hupasiya - Multi-agent session orchestrator
 #[derive(Parser)]
@@ -176,6 +177,13 @@ enum Commands {
     /// Check installation and configuration
     Doctor,
 
+    /// Interactive tutorial - learn all features
+    Tutorial {
+        /// Skip intro and jump to section selection
+        #[arg(long)]
+        skip_intro: bool,
+    },
+
     /// Show version information
     Version,
 }
@@ -272,6 +280,8 @@ fn main() -> Result<()> {
         } => cli::cmd_exec(session, command, cascade, tree),
 
         Commands::Doctor => cli::cmd_doctor(),
+
+        Commands::Tutorial { skip_intro } => cli::cmd_tutorial(skip_intro),
 
         Commands::Version => cli::cmd_version(),
     };

@@ -416,6 +416,16 @@ pub fn cmd_version() -> Result<()> {
     Ok(())
 }
 
+/// Execute the 'tutorial' command
+pub fn cmd_tutorial(skip_intro: bool) -> Result<()> {
+    let config = Config::load()?;
+    let tutorial = crate::tutorial::Tutorial::new(config)?;
+
+    tutorial.run(skip_intro)?;
+
+    Ok(())
+}
+
 // Helper functions
 
 fn print_session_table(sessions: &[crate::models::Session]) -> Result<()> {
