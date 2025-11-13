@@ -100,11 +100,103 @@ impl ProfileManager {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::config::{AiToolConfig, ContextStrategy, LaunchMethod, ProfileConfig};
+    use std::collections::HashMap;
 
     #[test]
     fn test_profile_manager_creation() {
         let config = Config::default();
         let result = ProfileManager::new(config);
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_list_profiles() {
+        let mut config = Config::default();
+
+        // Add some test profiles
+        let mut profiles = HashMap::new();
+        profiles.insert(
+            "fast".to_string(),
+            ProfileConfig {
+                hn: None,
+                ai_tool: Some(AiToolConfig {
+                    command: "claude-code".to_string(),
+                    launch_method: LaunchMethod::Exec,
+                    context_strategy: ContextStrategy::SlashCommand,
+                    extra_args: vec![],
+                    env: HashMap::new(),
+                }),
+                pr: None,
+                orchestration: None,
+            },
+        );
+        profiles.insert(
+            "deep".to_string(),
+            ProfileConfig {
+                hn: None,
+                ai_tool: Some(AiToolConfig {
+                    command: "cursor".to_string(),
+                    launch_method: LaunchMethod::Tmux,
+                    context_strategy: ContextStrategy::File,
+                    extra_args: vec![],
+                    env: HashMap::new(),
+                }),
+                pr: None,
+                orchestration: None,
+            },
+        );
+        config.hp.profiles = profiles;
+
+        let mgr = ProfileManager::new(config).unwrap();
+        let result = mgr.list();
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_list_no_profiles() {
+        let config = Config::default();
+        let mgr = ProfileManager::new(config).unwrap();
+
+        // Should succeed even with no profiles
+        let result = mgr.list();
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_show_profile() {
+        let mut config = Config::default();
+
+        // Add a test profile
+        let mut profiles = HashMap::new();
+        profiles.insert(
+            "test-profile".to_string(),
+            ProfileConfig {
+                hn: None,
+                ai_tool: Some(AiToolConfig {
+                    command: "test-tool".to_string(),
+                    launch_method: LaunchMethod::Exec,
+                    context_strategy: ContextStrategy::Env,
+                    extra_args: vec![],
+                    env: HashMap::from([("TEST_VAR".to_string(), "test_value".to_string())]),
+                }),
+                pr: None,
+                orchestration: None,
+            },
+        );
+        config.hp.profiles = profiles;
+
+        let mgr = ProfileManager::new(config).unwrap();
+        let result = mgr.show("test-profile");
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_show_nonexistent_profile() {
+        let config = Config::default();
+        let mgr = ProfileManager::new(config).unwrap();
+
+        let result = mgr.show("nonexistent");
+        assert!(result.is_err());
     }
 }

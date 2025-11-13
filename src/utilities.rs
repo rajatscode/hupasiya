@@ -199,6 +199,30 @@ impl UtilitiesManager {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::{AgentType, Session};
+    use tempfile::TempDir;
+
+    fn setup_test_env() -> (TempDir, Config) {
+        let temp_dir = TempDir::new().unwrap();
+        let mut config = Config::default();
+        config.hp.sessions.metadata_dir = temp_dir.path().join("sessions");
+        config.hp.sessions.context_dir = temp_dir.path().join("contexts");
+        std::fs::create_dir_all(&config.hp.sessions.metadata_dir).unwrap();
+        (temp_dir, config)
+    }
+
+    fn create_test_session(name: &str, agent_type: AgentType) -> Session {
+        Session::new(
+            name.to_string(),
+            agent_type,
+            format!("wb-{}", name),
+            std::path::PathBuf::from(format!("/tmp/{}", name)),
+            "main".to_string(),
+            "main".to_string(),
+            "test-repo".to_string(),
+            "git".to_string(),
+        )
+    }
 
     #[test]
     fn test_utilities_manager_creation() {
@@ -206,6 +230,112 @@ mod tests {
         match UtilitiesManager::new(config) {
             Ok(_) => {
                 // Successfully created
+            }
+            Err(crate::error::Error::HnNotFound) => {
+                println!("Skipping: hn not installed");
+            }
+            Err(e) => panic!("Unexpected error: {}", e),
+        }
+    }
+
+    #[test]
+    fn test_monitor_with_sessions() {
+        let (_temp_dir, config) = setup_test_env();
+        let session_mgr = crate::session::SessionManager::new(config.clone());
+
+        match session_mgr {
+            Ok(mgr) => {
+                // Create test sessions
+                let session = create_test_session("monitor-test", AgentType::Feature);
+                let _ = mgr.save_session(&session);
+
+                // Test monitor (non-watch mode)
+                let util_mgr = UtilitiesManager::new(config).unwrap();
+                let result = util_mgr.monitor(false);
+                assert!(result.is_ok());
+            }
+            Err(crate::error::Error::HnNotFound) => {
+                println!("Skipping: hn not installed");
+            }
+            Err(e) => panic!("Unexpected error: {}", e),
+        }
+    }
+
+    #[test]
+    fn test_clean_dry_run() {
+        let (_temp_dir, config) = setup_test_env();
+        let session_mgr = crate::session::SessionManager::new(config.clone());
+
+        match session_mgr {
+            Ok(mgr) => {
+                // Create an old archived session
+                let mut session = create_test_session("old-session", AgentType::Feature);
+                session.status = SessionStatus::Archived;
+                // Make it appear old
+                session.created = chrono::Utc::now() - chrono::Duration::days(60);
+                let _ = mgr.save_session(&session);
+
+                // Test clean in dry-run mode
+                let util_mgr = UtilitiesManager::new(config).unwrap();
+                let result = util_mgr.clean(30, true, false);
+                assert!(result.is_ok());
+
+                // Session should still exist
+                assert!(mgr.session_exists("old-session"));
+            }
+            Err(crate::error::Error::HnNotFound) => {
+                println!("Skipping: hn not installed");
+            }
+            Err(e) => panic!("Unexpected error: {}", e),
+        }
+    }
+
+    #[test]
+    fn test_leave_with_pause() {
+        let (_temp_dir, config) = setup_test_env();
+        let session_mgr = crate::session::SessionManager::new(config.clone());
+
+        match session_mgr {
+            Ok(mgr) => {
+                // Create test session
+                let session = create_test_session("leave-test", AgentType::Feature);
+                mgr.save_session(&session).unwrap();
+
+                // Test leave (pause)
+                let util_mgr = UtilitiesManager::new(config).unwrap();
+                let result = util_mgr.leave("leave-test", false);
+                assert!(result.is_ok());
+
+                // Session should be paused
+                let updated = mgr.load_session("leave-test").unwrap();
+                assert!(matches!(updated.status, SessionStatus::Paused));
+            }
+            Err(crate::error::Error::HnNotFound) => {
+                println!("Skipping: hn not installed");
+            }
+            Err(e) => panic!("Unexpected error: {}", e),
+        }
+    }
+
+    #[test]
+    fn test_leave_with_archive() {
+        let (_temp_dir, config) = setup_test_env();
+        let session_mgr = crate::session::SessionManager::new(config.clone());
+
+        match session_mgr {
+            Ok(mgr) => {
+                // Create test session
+                let session = create_test_session("archive-test", AgentType::Feature);
+                mgr.save_session(&session).unwrap();
+
+                // Test leave (archive)
+                let util_mgr = UtilitiesManager::new(config).unwrap();
+                let result = util_mgr.leave("archive-test", true);
+                assert!(result.is_ok());
+
+                // Session should be archived
+                let updated = mgr.load_session("archive-test").unwrap();
+                assert!(matches!(updated.status, SessionStatus::Archived));
             }
             Err(crate::error::Error::HnNotFound) => {
                 println!("Skipping: hn not installed");

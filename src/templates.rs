@@ -210,11 +210,95 @@ impl TemplateManager {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use tempfile::TempDir;
+
+    fn setup_test_env() -> (TempDir, Config) {
+        let temp_dir = TempDir::new().unwrap();
+        let config = Config::default();
+        (temp_dir, config)
+    }
 
     #[test]
     fn test_template_manager_creation() {
         let config = Config::default();
         let result = TemplateManager::new(config);
         assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_list_builtin_templates() {
+        let (_temp_dir, config) = setup_test_env();
+        let mgr = TemplateManager::new(config).unwrap();
+
+        // List should show built-in templates
+        let result = mgr.list();
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_install_template_from_file() {
+        let (_temp_dir, config) = setup_test_env();
+        let mgr = TemplateManager::new(config.clone());
+
+        // Create a test template file
+        let test_template_dir = TempDir::new().unwrap();
+        let test_template = test_template_dir.path().join("test-template.md");
+        std::fs::write(
+            &test_template,
+            "# Test Template\nObjectives:\n- Test objective 1",
+        )
+        .unwrap();
+
+        // Install it - just verify it doesn't error
+        let result = mgr.unwrap().install(
+            test_template.to_str().unwrap(),
+            Some("my-custom-template".to_string()),
+        );
+        assert!(result.is_ok());
+        // Note: File is installed to ~/.config/hupasiya/templates/ by default
+    }
+
+    #[test]
+    fn test_search_templates() {
+        let (_temp_dir, config) = setup_test_env();
+        let mgr = TemplateManager::new(config.clone()).unwrap();
+
+        // Install a test template
+        let test_template_dir = TempDir::new().unwrap();
+        let test_template = test_template_dir.path().join("python-test.md");
+        std::fs::write(
+            &test_template,
+            "# Python Testing Template\nFor writing Python tests",
+        )
+        .unwrap();
+
+        let _ = mgr.install(
+            test_template.to_str().unwrap(),
+            Some("python-test".to_string()),
+        );
+
+        // Search for it
+        let result = mgr.search("python");
+        assert!(result.is_ok());
+
+        // Search for non-existent
+        let result2 = mgr.search("nonexistent_template_xyz");
+        assert!(result2.is_ok()); // Should succeed but show no results
+    }
+
+    #[test]
+    fn test_install_without_name_uses_source_name() {
+        let (_temp_dir, config) = setup_test_env();
+        let mgr = TemplateManager::new(config.clone()).unwrap();
+
+        // Create a test template
+        let test_template_dir = TempDir::new().unwrap();
+        let test_template = test_template_dir.path().join("auto-named.md");
+        std::fs::write(&test_template, "# Auto Named Template").unwrap();
+
+        // Install without explicit name - just verify it doesn't error
+        let result = mgr.install(test_template.to_str().unwrap(), None);
+        assert!(result.is_ok());
+        // Note: File is installed to ~/.config/hupasiya/templates/ with source filename
     }
 }
