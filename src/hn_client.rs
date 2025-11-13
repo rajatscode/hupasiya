@@ -200,6 +200,7 @@ impl HnClient {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
 
     #[test]
     fn test_check_installed_fails_when_not_found() {
