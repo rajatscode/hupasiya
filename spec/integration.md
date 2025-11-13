@@ -92,6 +92,10 @@ pub fn create_workbox(name: &str, opts: &WorkboxOptions) -> Result<WorkboxInfo> 
         cmd.arg("--vcs").arg(vcs);
     }
 
+    if opts.no_branch {
+        cmd.arg("--no-branch");
+    }
+
     if let Some(sparse) = &opts.sparse {
         for path in sparse {
             cmd.arg("--sparse").arg(path);

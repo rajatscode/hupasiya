@@ -71,6 +71,9 @@ hn --version
 # Create a new session
 hp new auth-feature --type=feature
 
+# Create session on current branch (no new branch)
+hp new my-work --no-branch
+
 # Edit context (opens in your $EDITOR)
 hp context edit auth-feature
 

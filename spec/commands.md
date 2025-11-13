@@ -38,6 +38,9 @@ hp new api-design --template=marketplace/fastapi-api
 # Specify VCS explicitly (passed to hn)
 hp new auth-feature --vcs=jujutsu
 
+# Create workbox on current branch (no new branch)
+hp new auth-feature --no-branch
+
 # Pass hannahanna-specific options
 hp new auth-feature --hn-option=sparse=services/api/
 ```
@@ -49,6 +52,7 @@ hp new auth-feature --hn-option=sparse=services/api/
 - `--parent=<session>` - Parent session (creates dependency)
 - `--template=<name>` - Context template (local or marketplace/author/name)
 - `--no-workbox` - Create session without new workbox (attach to existing)
+- `--no-branch` - Create workbox on current branch without creating new branch (passed to hn add --no-branch)
 - `--pr=<number>` - Associate with existing PR
 - `--vcs=<git|hg|jj>` - Explicit VCS type (passed to hn add --vcs)
 - `--profile=<name>` - Configuration profile to use
