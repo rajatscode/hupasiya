@@ -312,12 +312,14 @@ mod tests {
     }
 
     #[test]
+    #[ignore] // Requires hannahanna to be installed
     fn test_orchestrator_creation() {
         let (_orch, _temp) = create_test_orchestrator();
         // Just verify it creates successfully
     }
 
     #[test]
+    #[ignore] // Requires hannahanna to be installed
     fn test_show_tree_empty() {
         let (orch, _temp) = create_test_orchestrator();
         let result = orch.show_tree(None);

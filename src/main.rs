@@ -1,6 +1,7 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand, Args};
 
+mod ai_tool;
 mod cli;
 mod config;
 mod context;
@@ -121,6 +122,52 @@ enum Commands {
         session: Option<String>,
     },
 
+    /// Launch AI tool with context
+    Launch {
+        /// Session name (or use HP_SESSION env var)
+        session: Option<String>,
+
+        /// Override AI tool command
+        #[arg(long)]
+        tool: Option<String>,
+
+        /// Configuration profile to use
+        #[arg(long)]
+        profile: Option<String>,
+
+        /// Extra args to pass to AI tool
+        #[arg(last = true)]
+        extra_args: Vec<String>,
+    },
+
+    /// Launch shell in session workbox
+    Shell {
+        /// Session name (or use HP_SESSION env var)
+        session: Option<String>,
+
+        /// Command to run (instead of interactive shell)
+        #[arg(last = true)]
+        command: Option<Vec<String>>,
+    },
+
+    /// Execute command in session workbox
+    Exec {
+        /// Session name
+        session: String,
+
+        /// Command to execute
+        #[arg(required = true)]
+        command: Vec<String>,
+
+        /// Execute in all children
+        #[arg(long)]
+        cascade: bool,
+
+        /// Execute in parent and all children
+        #[arg(long)]
+        tree: bool,
+    },
+
     /// Check installation and configuration
     Doctor,
 
@@ -202,6 +249,22 @@ fn main() -> Result<()> {
         Commands::Gather { parent, dry_run } => cli::cmd_gather(&parent, dry_run),
 
         Commands::Tree { session } => cli::cmd_tree(session),
+
+        Commands::Launch {
+            session,
+            tool,
+            profile,
+            extra_args,
+        } => cli::cmd_launch(session, tool, profile, extra_args),
+
+        Commands::Shell { session, command } => cli::cmd_shell(session, command),
+
+        Commands::Exec {
+            session,
+            command,
+            cascade,
+            tree,
+        } => cli::cmd_exec(session, command, cascade, tree),
 
         Commands::Doctor => cli::cmd_doctor(),
 

@@ -3,6 +3,7 @@
 //! This is the library crate for hupasiya, providing session management,
 //! context management, and hannahanna integration.
 
+pub mod ai_tool;
 pub mod cli;
 pub mod config;
 pub mod context;

@@ -73,6 +73,22 @@ pub enum Error {
     #[error("Session '{0}' is locked by {1}")]
     SessionLocked(String, String),
 
+    /// No current session
+    #[error("No current session. Either specify session name or set HP_SESSION environment variable")]
+    NoCurrentSession,
+
+    /// AI tool failed
+    #[error("AI tool failed: {0}")]
+    AiToolFailed(String),
+
+    /// Invalid input
+    #[error("Invalid input: {0}")]
+    InvalidInput(String),
+
+    /// Profile not found
+    #[error("Profile '{0}' not found")]
+    ProfileNotFound(String),
+
     /// Generic error
     #[error("{0}")]
     Other(String),

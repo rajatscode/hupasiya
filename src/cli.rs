@@ -7,6 +7,7 @@ use crate::hn_client::{HnClient, WorkboxOptions};
 use crate::models::{AgentType, SessionStatus, SnapshotTrigger};
 use crate::orchestration::Orchestrator;
 use crate::session::SessionManager;
+use crate::ai_tool::AiTool;
 use colored::Colorize;
 use std::io::{self, Write};
 
@@ -497,6 +498,46 @@ pub fn cmd_tree(session_name: Option<String>) -> Result<()> {
     let orchestrator = Orchestrator::new(config)?;
 
     orchestrator.show_tree(session_name)?;
+
+    Ok(())
+}
+
+/// Execute the 'launch' command
+pub fn cmd_launch(
+    session_name: Option<String>,
+    tool: Option<String>,
+    profile: Option<String>,
+    extra_args: Vec<String>,
+) -> Result<()> {
+    let config = Config::load()?;
+    let ai_tool = AiTool::new(config)?;
+
+    ai_tool.launch(session_name, tool, profile, extra_args)?;
+
+    Ok(())
+}
+
+/// Execute the 'shell' command
+pub fn cmd_shell(session_name: Option<String>, command: Option<Vec<String>>) -> Result<()> {
+    let config = Config::load()?;
+    let ai_tool = AiTool::new(config)?;
+
+    ai_tool.shell(session_name, command)?;
+
+    Ok(())
+}
+
+/// Execute the 'exec' command
+pub fn cmd_exec(
+    session_name: String,
+    command: Vec<String>,
+    cascade: bool,
+    tree: bool,
+) -> Result<()> {
+    let config = Config::load()?;
+    let ai_tool = AiTool::new(config)?;
+
+    ai_tool.exec(&session_name, command, cascade, tree)?;
 
     Ok(())
 }
