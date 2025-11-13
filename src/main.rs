@@ -7,6 +7,7 @@ mod context;
 mod error;
 mod hn_client;
 mod models;
+mod orchestration;
 mod session;
 
 /// hupasiya - Multi-agent session orchestrator
@@ -94,6 +95,32 @@ enum Commands {
     /// Context management
     Context(ContextCommand),
 
+    /// Cascade parent changes to children
+    Cascade {
+        /// Parent session name
+        parent: String,
+
+        /// Dry run (show what would happen)
+        #[arg(long)]
+        dry_run: bool,
+    },
+
+    /// Gather children back to parent
+    Gather {
+        /// Parent session name
+        parent: String,
+
+        /// Dry run (show what would happen)
+        #[arg(long)]
+        dry_run: bool,
+    },
+
+    /// Show session tree
+    Tree {
+        /// Root session (or show all roots)
+        session: Option<String>,
+    },
+
     /// Check installation and configuration
     Doctor,
 
@@ -169,6 +196,12 @@ fn main() -> Result<()> {
                 description,
             } => cli::cmd_context_snapshot(session, name, description),
         },
+
+        Commands::Cascade { parent, dry_run } => cli::cmd_cascade(&parent, dry_run),
+
+        Commands::Gather { parent, dry_run } => cli::cmd_gather(&parent, dry_run),
+
+        Commands::Tree { session } => cli::cmd_tree(session),
 
         Commands::Doctor => cli::cmd_doctor(),
 

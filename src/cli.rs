@@ -5,6 +5,7 @@ use crate::context::ContextManager;
 use crate::error::Result;
 use crate::hn_client::{HnClient, WorkboxOptions};
 use crate::models::{AgentType, SessionStatus, SnapshotTrigger};
+use crate::orchestration::Orchestrator;
 use crate::session::SessionManager;
 use colored::Colorize;
 use std::io::{self, Write};
@@ -468,4 +469,34 @@ fn get_session_name(session_name: Option<String>) -> Result<String> {
     Err(crate::error::Error::Other(
         "No session specified. Use --session=<name> or set HP_SESSION".to_string(),
     ))
+}
+
+/// Execute the 'cascade' command
+pub fn cmd_cascade(parent_name: &str, dry_run: bool) -> Result<()> {
+    let config = Config::load()?;
+    let orchestrator = Orchestrator::new(config)?;
+
+    orchestrator.cascade(parent_name, dry_run)?;
+
+    Ok(())
+}
+
+/// Execute the 'gather' command
+pub fn cmd_gather(parent_name: &str, dry_run: bool) -> Result<()> {
+    let config = Config::load()?;
+    let orchestrator = Orchestrator::new(config)?;
+
+    orchestrator.gather(parent_name, dry_run)?;
+
+    Ok(())
+}
+
+/// Execute the 'tree' command
+pub fn cmd_tree(session_name: Option<String>) -> Result<()> {
+    let config = Config::load()?;
+    let orchestrator = Orchestrator::new(config)?;
+
+    orchestrator.show_tree(session_name)?;
+
+    Ok(())
 }
