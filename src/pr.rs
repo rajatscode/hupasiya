@@ -79,26 +79,13 @@ mod tests {
     #[test]
     fn test_pr_manager_creation() {
         // Test that we can create a PR manager
-        let config = Config::default();
+        let _config = Config::default();
         // This will fail because HnClient::new() checks for hn binary
         // which is expected in development
     }
 
-    #[test]
-    #[ignore] // TODO: Implement when PR integration is complete
-    fn test_create_pr() {
-        // Test PR creation
-    }
-
-    #[test]
-    #[ignore] // TODO: Implement when PR integration is complete
-    fn test_sync_pr() {
-        // Test PR comment syncing
-    }
-
-    #[test]
-    #[ignore] // TODO: Implement when PR integration is complete
-    fn test_pr_status() {
-        // Test PR status display
-    }
+    // TODO: Add tests for PR integration when implemented
+    // - test_create_pr: Test PR creation
+    // - test_sync_pr: Test PR comment syncing
+    // - test_pr_status: Test PR status display
 }

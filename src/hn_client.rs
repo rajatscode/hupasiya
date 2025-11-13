@@ -2,8 +2,6 @@
 
 use crate::error::{Error, Result};
 use crate::models::WorkboxInfo;
-use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use std::process::Command;
 
 /// hannahanna CLI client
@@ -86,10 +84,7 @@ impl HnClient {
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(Error::HnCommandFailed(format!(
-                "hn add failed: {}",
-                stderr
-            )));
+            return Err(Error::HnCommandFailed(format!("hn add failed: {}", stderr)));
         }
 
         // Parse JSON output
@@ -124,7 +119,10 @@ impl HnClient {
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(Error::HnCommandFailed(format!("hn list failed: {}", stderr)));
+            return Err(Error::HnCommandFailed(format!(
+                "hn list failed: {}",
+                stderr
+            )));
         }
 
         let stdout = String::from_utf8_lossy(&output.stdout);
@@ -166,9 +164,9 @@ impl HnClient {
             cmd.arg("--force");
         }
 
-        let output = cmd.output().map_err(|e| {
-            Error::HnCommandFailed(format!("Failed to execute hn remove: {}", e))
-        })?;
+        let output = cmd
+            .output()
+            .map_err(|e| Error::HnCommandFailed(format!("Failed to execute hn remove: {}", e)))?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
@@ -202,6 +200,7 @@ impl HnClient {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
 
     #[test]
     fn test_check_installed_fails_when_not_found() {
@@ -266,7 +265,6 @@ mod tests {
 
     // Integration tests (require hn to be installed)
     #[test]
-    #[ignore] // Run with: cargo test --ignored
     fn test_create_and_remove_workbox() {
         let client = match HnClient::new() {
             Ok(c) => c,
@@ -307,7 +305,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_list_workboxes() {
         let client = match HnClient::new() {
             Ok(c) => c,
@@ -325,7 +322,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_exec_in_workbox() {
         let client = match HnClient::new() {
             Ok(c) => c,
@@ -337,16 +333,15 @@ mod tests {
 
         // Create test workbox
         let opts = WorkboxOptions::default();
-        if client
-            .create_workbox("test-hp-exec", &opts)
-            .is_err()
-        {
+        if client.create_workbox("test-hp-exec", &opts).is_err() {
             println!("Failed to create test workbox");
             return;
         }
 
         // Execute command
-        let output = client.exec_in_workbox("test-hp-exec", "echo hello").unwrap();
+        let output = client
+            .exec_in_workbox("test-hp-exec", "echo hello")
+            .unwrap();
         assert_eq!(output.trim(), "hello");
 
         // Cleanup

@@ -1,5 +1,6 @@
 //! CLI commands implementation
 
+use crate::ai_tool::AiTool;
 use crate::config::Config;
 use crate::context::ContextManager;
 use crate::error::Result;
@@ -7,7 +8,6 @@ use crate::hn_client::{HnClient, WorkboxOptions};
 use crate::models::{AgentType, SessionStatus, SnapshotTrigger};
 use crate::orchestration::Orchestrator;
 use crate::session::SessionManager;
-use crate::ai_tool::AiTool;
 use colored::Colorize;
 use std::io::{self, Write};
 
@@ -24,8 +24,8 @@ pub fn cmd_new(
     let context_mgr = ContextManager::new(config.clone())?;
 
     // Parse agent type
-    let agent_type = AgentType::from_str(agent_type)
-        .map_err(|e| crate::error::Error::InvalidAgentType(e))?;
+    let agent_type =
+        AgentType::from_str(agent_type).map_err(crate::error::Error::InvalidAgentType)?;
 
     // Create workbox options
     let opts = WorkboxOptions {
@@ -50,7 +50,11 @@ pub fn cmd_new(
     context_mgr.init_context(&session)?;
 
     println!();
-    println!("{} Session '{}' created successfully!", "✓".green(), name.bold());
+    println!(
+        "{} Session '{}' created successfully!",
+        "✓".green(),
+        name.bold()
+    );
     println!("  Workbox: {}", session.workbox_path.display());
     println!("  Branch: {}", session.branch);
     println!("  Context: {}", session.context_dir.display());
@@ -111,7 +115,10 @@ pub fn cmd_info(name: &str, verbose: bool) -> Result<()> {
     println!("  Type: {:?}", session.agent_type);
     println!("  Status: {:?}", session.status);
     println!("  Created: {}", session.created.format("%Y-%m-%d %H:%M:%S"));
-    println!("  Last Active: {}", session.last_active.format("%Y-%m-%d %H:%M:%S"));
+    println!(
+        "  Last Active: {}",
+        session.last_active.format("%Y-%m-%d %H:%M:%S")
+    );
     println!();
     println!("{}", "Workbox:".bold());
     println!("  Name: {}", session.workbox_name);
@@ -213,22 +220,30 @@ pub fn cmd_switch(name: &str, output_shell: bool) -> Result<()> {
         // Output shell commands for wrapper to execute
         println!("cd {}", session.workbox_path.display());
         println!("export HP_SESSION={}", session.name);
-        println!("export HP_CONTEXT={}", session.context_dir.join("context.md").display());
+        println!(
+            "export HP_CONTEXT={}",
+            session.context_dir.join("context.md").display()
+        );
         println!("export HP_WORKBOX={}", session.workbox_path.display());
         println!("export HP_VCS={}", session.vcs_type);
     } else {
-        println!("{}", "Note: Use shell wrapper for 'hp switch' to work properly.".yellow());
+        println!(
+            "{}",
+            "Note: Use shell wrapper for 'hp switch' to work properly.".yellow()
+        );
         println!();
         println!("Add to ~/.bashrc or ~/.zshrc:");
         println!();
-        println!(r#"hp() {{
+        println!(
+            r#"hp() {{
     if [[ "$1" == "switch" ]]; then
         local session_info=$(command hp switch "$2" --output-shell)
         eval "$session_info"
     else
         command hp "$@"
     fi
-}}"#);
+}}"#
+        );
         println!();
         println!("Workbox path: {}", session.workbox_path.display());
     }
@@ -287,7 +302,11 @@ pub fn cmd_context_snapshot(
         description,
     )?;
 
-    println!("{} Snapshot '{}' created", "✓".green(), snapshot.name.bold());
+    println!(
+        "{} Snapshot '{}' created",
+        "✓".green(),
+        snapshot.name.bold()
+    );
     println!("  Path: {}", snapshot.path.display());
 
     Ok(())
@@ -344,8 +363,14 @@ pub fn cmd_doctor() -> Result<()> {
         Ok(config) => {
             println!("{}", "OK".green());
             println!("  Default agent: {:?}", config.hp.default_agent);
-            println!("  Sessions dir: {}", config.hp.sessions.metadata_dir.display());
-            println!("  Contexts dir: {}", config.hp.sessions.context_dir.display());
+            println!(
+                "  Sessions dir: {}",
+                config.hp.sessions.metadata_dir.display()
+            );
+            println!(
+                "  Contexts dir: {}",
+                config.hp.sessions.context_dir.display()
+            );
         }
         Err(e) => {
             println!("{}", "FAIL".red());
@@ -357,8 +382,8 @@ pub fn cmd_doctor() -> Result<()> {
     // Check directories
     print!("Checking directories... ");
     io::stdout().flush()?;
-    let dirs_ok = std::path::Path::new(".hp").exists()
-        || std::fs::create_dir_all(".hp/sessions").is_ok();
+    let dirs_ok =
+        std::path::Path::new(".hp").exists() || std::fs::create_dir_all(".hp/sessions").is_ok();
 
     if dirs_ok {
         println!("{}", "OK".green());
@@ -434,7 +459,11 @@ fn print_session_tree(sessions: &[crate::models::Session]) -> Result<()> {
     Ok(())
 }
 
-fn print_session_node(session: &crate::models::Session, all_sessions: &[crate::models::Session], depth: usize) {
+fn print_session_node(
+    session: &crate::models::Session,
+    all_sessions: &[crate::models::Session],
+    depth: usize,
+) {
     let indent = "  ".repeat(depth);
     let prefix = if depth == 0 { "" } else { "└─ " };
 
@@ -446,7 +475,11 @@ fn print_session_node(session: &crate::models::Session, all_sessions: &[crate::m
 
     println!(
         "{}{}{} {} ({:?})",
-        indent, prefix, status_icon, session.name.bold(), session.agent_type
+        indent,
+        prefix,
+        status_icon,
+        session.name.bold(),
+        session.agent_type
     );
 
     // Print children

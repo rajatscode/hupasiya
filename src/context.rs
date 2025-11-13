@@ -6,10 +6,11 @@ use crate::models::{AgentType, Session, SnapshotInfo, SnapshotTrigger};
 use chrono::Utc;
 use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::process::Command;
 
 /// Context manager
+#[allow(dead_code)]
 pub struct ContextManager {
     config: Config,
     context_base_dir: PathBuf,
@@ -80,12 +81,13 @@ impl ContextManager {
         let editor = std::env::var("EDITOR").unwrap_or_else(|_| "vi".to_string());
 
         // Launch editor
-        let status = Command::new(&editor)
-            .arg(&context_path)
-            .status()?;
+        let status = Command::new(&editor).arg(&context_path).status()?;
 
         if !status.success() {
-            return Err(Error::Other(format!("Editor '{}' exited with error", editor)));
+            return Err(Error::Other(format!(
+                "Editor '{}' exited with error",
+                editor
+            )));
         }
 
         Ok(())
@@ -547,8 +549,8 @@ mod tests {
 
     #[test]
     fn test_init_context() {
-        let (manager, _temp) = create_test_manager();
-        let session = create_test_session();
+        let (manager, temp) = create_test_manager();
+        let session = create_test_session_with_context_dir(&temp.path().join("contexts"));
 
         manager.init_context(&session).unwrap();
 
@@ -561,10 +563,9 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // TODO: Fix context_dir path mismatch in tests
     fn test_read_write_context() {
-        let (manager, _temp) = create_test_manager();
-        let session = create_test_session();
+        let (manager, temp) = create_test_manager();
+        let session = create_test_session_with_context_dir(&temp.path().join("contexts"));
 
         manager.init_context(&session).unwrap();
 
@@ -577,15 +578,13 @@ mod tests {
 
     #[test]
     fn test_create_snapshot() {
-        let (manager, _temp) = create_test_manager();
-        let session = create_test_session();
+        let (manager, temp) = create_test_manager();
+        let session = create_test_session_with_context_dir(&temp.path().join("contexts"));
 
         manager.init_context(&session).unwrap();
 
         // Write some content
-        manager
-            .write_context(&session, "# Test Content")
-            .unwrap();
+        manager.write_context(&session, "# Test Content").unwrap();
 
         // Create snapshot
         let snapshot = manager
@@ -602,10 +601,9 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // TODO: Fix context_dir path mismatch in tests
     fn test_list_snapshots() {
-        let (manager, _temp) = create_test_manager();
-        let session = create_test_session();
+        let (manager, temp) = create_test_manager();
+        let session = create_test_session_with_context_dir(&temp.path().join("contexts"));
 
         manager.init_context(&session).unwrap();
 
@@ -622,10 +620,9 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // TODO: Fix context_dir path mismatch in tests
     fn test_restore_snapshot() {
-        let (manager, _temp) = create_test_manager();
-        let session = create_test_session();
+        let (manager, temp) = create_test_manager();
+        let session = create_test_session_with_context_dir(&temp.path().join("contexts"));
 
         manager.init_context(&session).unwrap();
 
@@ -653,11 +650,11 @@ mod tests {
 
     #[test]
     fn test_sync_context() {
-        let (manager, _temp) = create_test_manager();
-        let session1 = create_test_session();
-        let mut session2 = create_test_session();
+        let (manager, temp) = create_test_manager();
+        let session1 = create_test_session_with_context_dir(&temp.path().join("contexts"));
+        let mut session2 = create_test_session_with_context_dir(&temp.path().join("contexts"));
         session2.name = "test-session-2".to_string();
-        session2.context_dir = PathBuf::from(".hp/contexts/myrepo/test-session-2");
+        session2.context_dir = temp.path().join("contexts/test-session-2");
 
         manager.init_context(&session1).unwrap();
         manager.init_context(&session2).unwrap();

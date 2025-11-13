@@ -8,6 +8,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 /// Session manager
+#[allow(dead_code)]
 pub struct SessionManager {
     config: Config,
     hn_client: HnClient,
@@ -76,7 +77,10 @@ impl SessionManager {
         );
 
         // Log activity
-        session.log_activity(ActivityType::SessionCreated, format!("Created session '{}'", name));
+        session.log_activity(
+            ActivityType::SessionCreated,
+            format!("Created session '{}'", name),
+        );
 
         // Save session
         self.save_session(&session)?;
@@ -116,8 +120,9 @@ impl SessionManager {
     pub fn list_sessions(&self) -> Result<Vec<Session>> {
         let mut sessions = Vec::new();
 
-        let entries = fs::read_dir(&self.sessions_dir)
-            .map_err(|e| Error::FileSystemError(format!("Failed to read sessions directory: {}", e)))?;
+        let entries = fs::read_dir(&self.sessions_dir).map_err(|e| {
+            Error::FileSystemError(format!("Failed to read sessions directory: {}", e))
+        })?;
 
         for entry in entries {
             let entry = entry?;
@@ -140,13 +145,19 @@ impl SessionManager {
     /// List sessions filtered by status
     pub fn list_sessions_by_status(&self, status: SessionStatus) -> Result<Vec<Session>> {
         let sessions = self.list_sessions()?;
-        Ok(sessions.into_iter().filter(|s| s.status == status).collect())
+        Ok(sessions
+            .into_iter()
+            .filter(|s| s.status == status)
+            .collect())
     }
 
     /// List sessions filtered by agent type
     pub fn list_sessions_by_type(&self, agent_type: AgentType) -> Result<Vec<Session>> {
         let sessions = self.list_sessions()?;
-        Ok(sessions.into_iter().filter(|s| s.agent_type == agent_type).collect())
+        Ok(sessions
+            .into_iter()
+            .filter(|s| s.agent_type == agent_type)
+            .collect())
     }
 
     /// Update a session
@@ -292,7 +303,12 @@ impl SessionManager {
     }
 
     /// Clone a session (for parallel work)
-    pub fn clone_session(&self, name: &str, new_name: &str, new_agent_type: Option<AgentType>) -> Result<Session> {
+    pub fn clone_session(
+        &self,
+        name: &str,
+        new_name: &str,
+        new_agent_type: Option<AgentType>,
+    ) -> Result<Session> {
         // Load original session
         let original = self.load_session(name)?;
 
@@ -323,7 +339,10 @@ impl SessionManager {
         new_session.created = chrono::Utc::now();
         new_session.last_active = chrono::Utc::now();
         new_session.activity_log.clear();
-        new_session.context_dir = PathBuf::from(format!(".hp/contexts/{}/{}", new_session.repo_name, new_name));
+        new_session.context_dir = PathBuf::from(format!(
+            ".hp/contexts/{}/{}",
+            new_session.repo_name, new_name
+        ));
 
         // Override agent type if specified
         if let Some(agent_type) = new_agent_type {
@@ -524,7 +543,9 @@ mod tests {
         manager.save_session(&session1).unwrap();
         manager.save_session(&session2).unwrap();
 
-        let active_sessions = manager.list_sessions_by_status(SessionStatus::Active).unwrap();
+        let active_sessions = manager
+            .list_sessions_by_status(SessionStatus::Active)
+            .unwrap();
         assert_eq!(active_sessions.len(), 1);
         assert_eq!(active_sessions[0].name, "active");
     }
