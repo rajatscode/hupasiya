@@ -38,6 +38,7 @@ thiserror = "1.0"
 uuid = { version = "1.6", features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 which = "6.0"
+dirs = "5.0"
 
 # GitHub API (for PR integration)
 octocrab = "0.32"

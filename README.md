@@ -26,10 +26,56 @@ hupasiya calls `hn` commands as an external tool. Both must be installed.
 ## Status
 
 **Version**: 0.1.0-dev
-**Status**: In Development
-**Target v0.1**: Basic session management, context management, hannahanna integration
+**Status**: Core functionality implemented with TDD
 
-See [Roadmap](spec/roadmap.md) for detailed version goals and milestones.
+### ✅ Implemented Features
+
+**Foundation**:
+- ✅ Complete data models (Session, AgentType, WorkboxInfo, etc.)
+- ✅ 4-level configuration system with profiles
+- ✅ Comprehensive error handling
+- ✅ 41 passing unit tests
+
+**Session Management**:
+- ✅ Create/load/save/list sessions
+- ✅ Parent/child session relationships
+- ✅ Session cloning for parallel work
+- ✅ Status tracking (Active, Paused, Integrated, Archived)
+- ✅ Session tree navigation
+
+**Context Management**:
+- ✅ Built-in templates for all 8 agent types
+- ✅ Template variable substitution
+- ✅ Context snapshots with triggers
+- ✅ Snapshot restore functionality
+- ✅ Context syncing between sessions
+- ✅ Editor integration ($EDITOR)
+
+**hannahanna Integration**:
+- ✅ Workbox creation and removal
+- ✅ Multi-VCS support (git, hg, jj)
+- ✅ Command execution in workboxes
+- ✅ JSON output parsing
+- ✅ Workbox info queries
+
+**CLI Commands**:
+- ✅ `hp new` - Create sessions with all options
+- ✅ `hp list` - Table/tree views, JSON output
+- ✅ `hp info` - Detailed session information
+- ✅ `hp close` - Close with cleanup options
+- ✅ `hp switch` - Switch sessions (shell wrapper ready)
+- ✅ `hp context view/edit/snapshot` - Context operations
+- ✅ `hp doctor` - System health checks
+- ✅ `hp version` - Version information
+
+**User Experience**:
+- ✅ Colored output with status icons
+- ✅ Interactive confirmations
+- ✅ Comprehensive help text
+- ✅ Clear error messages
+- ✅ Next steps guidance
+
+See [Roadmap](spec/roadmap.md) for future versions.
 
 ## Installation
 
@@ -331,27 +377,34 @@ See [Architecture](spec/architecture.md) for detailed design.
 
 ## Roadmap
 
-### v0.1.0 - Foundation (In Development)
-- ✅ Core session management
-- ✅ hannahanna integration
-- ✅ Basic context management
-- ✅ Configuration system
+### v0.1.0 - Foundation (90% Complete)
+- ✅ Core session management (create, list, info, close)
+- ✅ hannahanna integration (workbox CRUD, exec, info)
+- ✅ Context management (templates, snapshots, edit)
+- ✅ Configuration system (4-level hierarchy, profiles)
+- ✅ Full CLI with colored output
+- ✅ Comprehensive test suite (41 tests passing)
+- ⏳ Shell wrapper for `hp switch`
+- ⏳ Integration tests with real hn
+- ⏳ E2E workflow tests
 
-### v0.2.0 - Multi-Agent (Planned)
-- Multi-agent coordination (cascade, gather)
-- Context snapshots
-- AI tool integration
-- Multi-VCS support
+### v0.2.0 - Multi-Agent (Next)
+- ⏳ Multi-agent coordination (cascade, gather)
+- ⏳ Orchestration engine
+- ⏳ AI tool integration (launch commands)
+- ⏳ Advanced context syncing
 
-### v0.3.0 - PR Integration (Planned)
-- PR operations
-- Shepherd workflow
-- Activity and metrics tracking
+### v0.3.0 - PR Integration (Future)
+- ⏳ GitHub API integration
+- ⏳ PR creation and syncing
+- ⏳ Shepherd workflow
+- ⏳ Activity and metrics tracking
 
-### v1.0.0 - Production Ready (Planned)
-- Polish and performance
-- Monitoring and observability
-- Comprehensive documentation
+### v1.0.0 - Production Ready (Future)
+- ⏳ Performance optimization
+- ⏳ Monitoring dashboard
+- ⏳ Template marketplace
+- ⏳ Comprehensive documentation
 
 See [Roadmap](spec/roadmap.md) for complete version goals.
 

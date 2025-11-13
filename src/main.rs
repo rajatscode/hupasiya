@@ -1,5 +1,16 @@
 use anyhow::Result;
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, Args};
+
+mod ai_tool;
+mod cli;
+mod config;
+mod context;
+mod error;
+mod hn_client;
+mod models;
+mod orchestration;
+mod pr;
+mod session;
 
 /// hupasiya - Multi-agent session orchestrator
 #[derive(Parser)]
@@ -8,6 +19,10 @@ use clap::{Parser, Subcommand};
 struct Cli {
     #[command(subcommand)]
     command: Commands,
+
+    /// Verbose output
+    #[arg(short, long, global = true)]
+    verbose: bool,
 }
 
 #[derive(Subcommand)]
@@ -18,8 +33,20 @@ enum Commands {
         name: String,
 
         /// Agent type (feature, bugfix, test, docs, etc.)
-        #[arg(short, long, default_value = "feature")]
+        #[arg(short = 't', long, default_value = "feature")]
         r#type: String,
+
+        /// Base branch to create from
+        #[arg(long)]
+        from: Option<String>,
+
+        /// Create on current branch (no new branch)
+        #[arg(long)]
+        no_branch: bool,
+
+        /// Parent session (creates dependency)
+        #[arg(long)]
+        parent: Option<String>,
     },
 
     /// List all sessions
@@ -27,6 +54,14 @@ enum Commands {
         /// Show all sessions (including archived)
         #[arg(short, long)]
         all: bool,
+
+        /// Show as tree with parent/child relationships
+        #[arg(long)]
+        tree: bool,
+
+        /// Output format (table, json)
+        #[arg(long)]
+        format: Option<String>,
     },
 
     /// Show session info
@@ -43,55 +78,204 @@ enum Commands {
         /// Remove workbox
         #[arg(long)]
         remove_workbox: bool,
+
+        /// Archive instead of marking as integrated
+        #[arg(long)]
+        archive: bool,
     },
+
+    /// Switch to a session
+    Switch {
+        /// Session name
+        name: String,
+
+        /// Output shell commands (for wrapper)
+        #[arg(long, hide = true)]
+        output_shell: bool,
+    },
+
+    /// Context management
+    Context(ContextCommand),
+
+    /// Cascade parent changes to children
+    Cascade {
+        /// Parent session name
+        parent: String,
+
+        /// Dry run (show what would happen)
+        #[arg(long)]
+        dry_run: bool,
+    },
+
+    /// Gather children back to parent
+    Gather {
+        /// Parent session name
+        parent: String,
+
+        /// Dry run (show what would happen)
+        #[arg(long)]
+        dry_run: bool,
+    },
+
+    /// Show session tree
+    Tree {
+        /// Root session (or show all roots)
+        session: Option<String>,
+    },
+
+    /// Launch AI tool with context
+    Launch {
+        /// Session name (or use HP_SESSION env var)
+        session: Option<String>,
+
+        /// Override AI tool command
+        #[arg(long)]
+        tool: Option<String>,
+
+        /// Configuration profile to use
+        #[arg(long)]
+        profile: Option<String>,
+
+        /// Extra args to pass to AI tool
+        #[arg(last = true)]
+        extra_args: Vec<String>,
+    },
+
+    /// Launch shell in session workbox
+    Shell {
+        /// Session name (or use HP_SESSION env var)
+        session: Option<String>,
+
+        /// Command to run (instead of interactive shell)
+        #[arg(last = true)]
+        command: Option<Vec<String>>,
+    },
+
+    /// Execute command in session workbox
+    Exec {
+        /// Session name
+        session: String,
+
+        /// Command to execute
+        #[arg(required = true)]
+        command: Vec<String>,
+
+        /// Execute in all children
+        #[arg(long)]
+        cascade: bool,
+
+        /// Execute in parent and all children
+        #[arg(long)]
+        tree: bool,
+    },
+
+    /// Check installation and configuration
+    Doctor,
 
     /// Show version information
     Version,
 }
 
+#[derive(Args)]
+struct ContextCommand {
+    #[command(subcommand)]
+    command: ContextSubcommand,
+}
+
+#[derive(Subcommand)]
+enum ContextSubcommand {
+    /// View context
+    View {
+        /// Session name (or use HP_SESSION env var)
+        session: Option<String>,
+    },
+
+    /// Edit context
+    Edit {
+        /// Session name (or use HP_SESSION env var)
+        session: Option<String>,
+    },
+
+    /// Create a snapshot
+    Snapshot {
+        /// Snapshot name
+        name: String,
+
+        /// Session name (or use HP_SESSION env var)
+        #[arg(long)]
+        session: Option<String>,
+
+        /// Description
+        #[arg(long)]
+        description: Option<String>,
+    },
+}
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    match cli.command {
-        Commands::New { name, r#type } => {
-            println!("Creating session '{}' with type '{}'", name, r#type);
-            println!("(Not yet implemented - this is a placeholder)");
-            Ok(())
-        }
-        Commands::List { all } => {
-            println!("Listing sessions (all: {})", all);
-            println!("(Not yet implemented - this is a placeholder)");
-            Ok(())
-        }
-        Commands::Info { name } => {
-            println!("Showing info for session '{}'", name);
-            println!("(Not yet implemented - this is a placeholder)");
-            Ok(())
-        }
+    let result = match cli.command {
+        Commands::New {
+            name,
+            r#type,
+            from,
+            no_branch,
+            parent,
+        } => cli::cmd_new(&name, &r#type, from, no_branch, parent),
+
+        Commands::List { all, tree, format } => cli::cmd_list(all, tree, format),
+
+        Commands::Info { name } => cli::cmd_info(&name, cli.verbose),
+
         Commands::Close {
             name,
             remove_workbox,
-        } => {
-            println!(
-                "Closing session '{}' (remove_workbox: {})",
-                name, remove_workbox
-            );
-            println!("(Not yet implemented - this is a placeholder)");
-            Ok(())
-        }
-        Commands::Version => {
-            println!("hupasiya (hp) v{}", env!("CARGO_PKG_VERSION"));
-            println!("Multi-agent session orchestrator");
-            Ok(())
-        }
-    }
-}
+            archive,
+        } => cli::cmd_close(&name, remove_workbox, archive),
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn test_placeholder() {
-        // Placeholder test to ensure the project compiles
-        assert_eq!(2 + 2, 4);
+        Commands::Switch { name, output_shell } => cli::cmd_switch(&name, output_shell),
+
+        Commands::Context(ctx) => match ctx.command {
+            ContextSubcommand::View { session } => cli::cmd_context_view(session),
+            ContextSubcommand::Edit { session } => cli::cmd_context_edit(session),
+            ContextSubcommand::Snapshot {
+                name,
+                session,
+                description,
+            } => cli::cmd_context_snapshot(session, name, description),
+        },
+
+        Commands::Cascade { parent, dry_run } => cli::cmd_cascade(&parent, dry_run),
+
+        Commands::Gather { parent, dry_run } => cli::cmd_gather(&parent, dry_run),
+
+        Commands::Tree { session } => cli::cmd_tree(session),
+
+        Commands::Launch {
+            session,
+            tool,
+            profile,
+            extra_args,
+        } => cli::cmd_launch(session, tool, profile, extra_args),
+
+        Commands::Shell { session, command } => cli::cmd_shell(session, command),
+
+        Commands::Exec {
+            session,
+            command,
+            cascade,
+            tree,
+        } => cli::cmd_exec(session, command, cascade, tree),
+
+        Commands::Doctor => cli::cmd_doctor(),
+
+        Commands::Version => cli::cmd_version(),
+    };
+
+    if let Err(e) = result {
+        eprintln!("Error: {}", e);
+        std::process::exit(1);
     }
+
+    Ok(())
 }
