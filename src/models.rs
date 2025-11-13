@@ -1,8 +1,7 @@
 //! Data models for hupasiya
 
-use chrono::{DateTime, Duration, Utc};
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::path::PathBuf;
 use uuid::Uuid;
 
@@ -32,6 +31,7 @@ pub enum AgentType {
 
 impl AgentType {
     /// Parse agent type from string
+    #[allow(clippy::should_implement_trait)]
     pub fn from_str(s: &str) -> Result<Self, String> {
         match s.to_lowercase().as_str() {
             "feature" => Ok(Self::Feature),

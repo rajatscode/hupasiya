@@ -56,7 +56,12 @@ impl Orchestrator {
                 Ok(true) => cascaded += 1,
                 Ok(false) => skipped += 1,
                 Err(e) => {
-                    eprintln!("  {} Failed to cascade to '{}': {}", "✗".red(), child_name, e);
+                    eprintln!(
+                        "  {} Failed to cascade to '{}': {}",
+                        "✗".red(),
+                        child_name,
+                        e
+                    );
                     skipped += 1;
                 }
             }
@@ -92,7 +97,12 @@ impl Orchestrator {
             "git" => format!("git merge {}", parent.branch),
             "hg" => format!("hg merge {}", parent.branch),
             "jj" => format!("jj rebase -d {}", parent.branch),
-            _ => return Err(Error::Other(format!("Unknown VCS type: {}", child_wb.vcs_type))),
+            _ => {
+                return Err(Error::Other(format!(
+                    "Unknown VCS type: {}",
+                    child_wb.vcs_type
+                )))
+            }
         };
 
         if dry_run {
@@ -111,11 +121,20 @@ impl Orchestrator {
         }
 
         // Execute merge in workbox
-        match self.hn_client.exec_in_workbox(&child.workbox_name, &merge_cmd) {
+        match self
+            .hn_client
+            .exec_in_workbox(&child.workbox_name, &merge_cmd)
+        {
             Ok(output) => {
                 if output.contains("conflict") || output.contains("CONFLICT") {
-                    println!("    {} Conflicts detected - manual resolution required", "⚠".yellow());
-                    println!("    Run: cd {} && resolve conflicts", child_wb.path.display());
+                    println!(
+                        "    {} Conflicts detected - manual resolution required",
+                        "⚠".yellow()
+                    );
+                    println!(
+                        "    Run: cd {} && resolve conflicts",
+                        child_wb.path.display()
+                    );
                 } else {
                     println!("    {} Merged successfully", "✓".green());
                 }
@@ -170,7 +189,12 @@ impl Orchestrator {
                 Ok(true) => gathered += 1,
                 Ok(false) => skipped += 1,
                 Err(e) => {
-                    eprintln!("  {} Failed to gather from '{}': {}", "✗".red(), child_name, e);
+                    eprintln!(
+                        "  {} Failed to gather from '{}': {}",
+                        "✗".red(),
+                        child_name,
+                        e
+                    );
                     skipped += 1;
                 }
             }
@@ -212,7 +236,12 @@ impl Orchestrator {
             "git" => format!("git merge {}", child.branch),
             "hg" => format!("hg merge {}", child.branch),
             "jj" => format!("jj rebase -s {} -d {}", child.branch, parent.branch),
-            _ => return Err(Error::Other(format!("Unknown VCS type: {}", parent_wb.vcs_type))),
+            _ => {
+                return Err(Error::Other(format!(
+                    "Unknown VCS type: {}",
+                    parent_wb.vcs_type
+                )))
+            }
         };
 
         if dry_run {
@@ -221,11 +250,20 @@ impl Orchestrator {
         }
 
         // Execute merge in parent workbox
-        match self.hn_client.exec_in_workbox(&parent.workbox_name, &merge_cmd) {
+        match self
+            .hn_client
+            .exec_in_workbox(&parent.workbox_name, &merge_cmd)
+        {
             Ok(output) => {
                 if output.contains("conflict") || output.contains("CONFLICT") {
-                    println!("    {} Conflicts detected - manual resolution required", "⚠".yellow());
-                    println!("    Run: cd {} && resolve conflicts", parent_wb.path.display());
+                    println!(
+                        "    {} Conflicts detected - manual resolution required",
+                        "⚠".yellow()
+                    );
+                    println!(
+                        "    Run: cd {} && resolve conflicts",
+                        parent_wb.path.display()
+                    );
                 } else {
                     println!("    {} Merged successfully", "✓".green());
                 }
@@ -250,7 +288,11 @@ impl Orchestrator {
         let roots: Vec<_> = if let Some(name) = root_name {
             vec![self.session_mgr.load_session(&name)?]
         } else {
-            sessions.iter().filter(|s| s.parent.is_none()).cloned().collect()
+            sessions
+                .iter()
+                .filter(|s| s.parent.is_none())
+                .cloned()
+                .collect()
         };
 
         println!();
@@ -263,7 +305,13 @@ impl Orchestrator {
     }
 
     /// Print a tree node recursively
-    fn print_tree_node(&self, session: &Session, all_sessions: &[Session], depth: usize) -> Result<()> {
+    #[allow(clippy::only_used_in_recursion)]
+    fn print_tree_node(
+        &self,
+        session: &Session,
+        all_sessions: &[Session],
+        depth: usize,
+    ) -> Result<()> {
         let indent = "  ".repeat(depth);
         let prefix = if depth == 0 { "" } else { "└─ " };
 

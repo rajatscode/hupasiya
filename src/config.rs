@@ -1,14 +1,14 @@
 //! Configuration management for hupasiya
 
-use crate::error::{Error, Result};
-use crate::models::{AgentType, SnapshotInfo};
+use crate::error::Result;
+use crate::models::AgentType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 /// Main configuration structure
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Config {
     pub hp: HpConfig,
 }
@@ -62,14 +62,6 @@ impl Config {
     /// Get active profile configuration
     pub fn get_active_profile(&self) -> Option<&ProfileConfig> {
         self.hp.profiles.get(&self.hp.active_profile)
-    }
-}
-
-impl Default for Config {
-    fn default() -> Self {
-        Self {
-            hp: HpConfig::default(),
-        }
     }
 }
 
@@ -383,22 +375,13 @@ pub enum ConfidenceLevel {
 }
 
 /// Template configuration
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct TemplateConfig {
     #[serde(default)]
     pub local: HashMap<String, PathBuf>,
 
     #[serde(default)]
     pub marketplace: MarketplaceConfig,
-}
-
-impl Default for TemplateConfig {
-    fn default() -> Self {
-        Self {
-            local: HashMap::new(),
-            marketplace: MarketplaceConfig::default(),
-        }
-    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

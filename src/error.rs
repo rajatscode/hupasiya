@@ -74,7 +74,9 @@ pub enum Error {
     SessionLocked(String, String),
 
     /// No current session
-    #[error("No current session. Either specify session name or set HP_SESSION environment variable")]
+    #[error(
+        "No current session. Either specify session name or set HP_SESSION environment variable"
+    )]
     NoCurrentSession,
 
     /// AI tool failed

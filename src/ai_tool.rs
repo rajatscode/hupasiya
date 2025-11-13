@@ -66,7 +66,10 @@ impl AiTool {
             "HP_CONTEXT".to_string(),
             format!(".hp/contexts/{}", session_name),
         );
-        env_vars.insert("HP_WORKBOX".to_string(), workbox_info.path.to_string_lossy().to_string());
+        env_vars.insert(
+            "HP_WORKBOX".to_string(),
+            workbox_info.path.to_string_lossy().to_string(),
+        );
         env_vars.insert("HP_VCS".to_string(), workbox_info.vcs_type.clone());
 
         // Build command args
@@ -97,7 +100,10 @@ impl AiTool {
         // Add extra args from command line
         args.extend(extra_args);
 
-        println!("🚀 Launching {} for session '{}'", tool_command, session_name);
+        println!(
+            "🚀 Launching {} for session '{}'",
+            tool_command, session_name
+        );
         println!("📂 Workbox: {}", workbox_info.path.display());
         println!("🌿 Branch: {}", workbox_info.branch);
 
@@ -111,10 +117,22 @@ impl AiTool {
                 self.launch_shell_function(&tool_command, &args, &env_vars, &workbox_path)?;
             }
             LaunchMethod::Tmux => {
-                self.launch_tmux(&tool_command, &args, &env_vars, &workbox_path, &session_name)?;
+                self.launch_tmux(
+                    &tool_command,
+                    &args,
+                    &env_vars,
+                    &workbox_path,
+                    &session_name,
+                )?;
             }
             LaunchMethod::Screen => {
-                self.launch_screen(&tool_command, &args, &env_vars, &workbox_path, &session_name)?;
+                self.launch_screen(
+                    &tool_command,
+                    &args,
+                    &env_vars,
+                    &workbox_path,
+                    &session_name,
+                )?;
             }
         }
 
@@ -139,7 +157,10 @@ impl AiTool {
             "HP_CONTEXT".to_string(),
             format!(".hp/contexts/{}", session_name),
         );
-        env_vars.insert("HP_WORKBOX".to_string(), workbox_info.path.to_string_lossy().to_string());
+        env_vars.insert(
+            "HP_WORKBOX".to_string(),
+            workbox_info.path.to_string_lossy().to_string(),
+        );
         env_vars.insert("HP_VCS".to_string(), workbox_info.vcs_type.clone());
 
         let workbox_path = workbox_info.path.to_string_lossy().to_string();
@@ -375,9 +396,7 @@ impl AiTool {
         }
 
         let mut cmd = Command::new(&command[0]);
-        cmd.args(&command[1..])
-            .current_dir(workdir)
-            .envs(env_vars);
+        cmd.args(&command[1..]).current_dir(workdir).envs(env_vars);
 
         let status = cmd.status()?;
 
@@ -409,7 +428,7 @@ impl AiTool {
     }
 
     fn exec_cascade(&self, parent_name: &str, command: &[String]) -> Result<()> {
-        let parent = self.session_mgr.load_session(parent_name)?;
+        let _parent = self.session_mgr.load_session(parent_name)?;
         let children = self.session_mgr.get_children(parent_name)?;
 
         if children.is_empty() {
@@ -417,7 +436,11 @@ impl AiTool {
             return Ok(());
         }
 
-        println!("🔄 Executing in {} children of '{}'", children.len(), parent_name);
+        println!(
+            "🔄 Executing in {} children of '{}'",
+            children.len(),
+            parent_name
+        );
 
         for child in &children {
             println!("\n▶️  Session: {}", child.name);
@@ -442,7 +465,10 @@ impl AiTool {
             self.exec_single(&desc.name, command)?;
         }
 
-        println!("\n✅ Command completed in tree ({} sessions)", 1 + descendants.len());
+        println!(
+            "\n✅ Command completed in tree ({} sessions)",
+            1 + descendants.len()
+        );
 
         Ok(())
     }

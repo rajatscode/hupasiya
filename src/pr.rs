@@ -84,21 +84,8 @@ mod tests {
         // which is expected in development
     }
 
-    #[test]
-    #[ignore] // TODO: Implement when PR integration is complete
-    fn test_create_pr() {
-        // Test PR creation
-    }
-
-    #[test]
-    #[ignore] // TODO: Implement when PR integration is complete
-    fn test_sync_pr() {
-        // Test PR comment syncing
-    }
-
-    #[test]
-    #[ignore] // TODO: Implement when PR integration is complete
-    fn test_pr_status() {
-        // Test PR status display
-    }
+    // TODO: Add tests for PR integration when implemented
+    // - test_create_pr: Test PR creation
+    // - test_sync_pr: Test PR comment syncing
+    // - test_pr_status: Test PR status display
 }
