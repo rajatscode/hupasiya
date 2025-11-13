@@ -1,0 +1,32 @@
+#!/bin/bash
+# Pre-commit hook: Run rustfmt and clippy
+
+set -e
+
+echo "Running pre-commit checks..."
+
+# Check if cargo is installed
+if ! command -v cargo &> /dev/null; then
+    echo "Error: cargo not found. Please install Rust."
+    exit 1
+fi
+
+# Run rustfmt
+echo "Running rustfmt..."
+if ! cargo fmt -- --check; then
+    echo ""
+    echo "Error: Code is not formatted correctly."
+    echo "Run 'cargo fmt' to format your code."
+    exit 1
+fi
+
+# Run clippy
+echo "Running clippy..."
+if ! cargo clippy -- -D warnings; then
+    echo ""
+    echo "Error: Clippy found issues."
+    echo "Fix the issues or run 'cargo clippy --fix' to auto-fix some of them."
+    exit 1
+fi
+
+echo "Pre-commit checks passed!"

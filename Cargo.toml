@@ -1,0 +1,53 @@
+[package]
+name = "hupasiya"
+version = "0.1.0"
+edition = "2021"
+authors = ["Your Name <your.email@example.com>"]
+description = "Multi-agent session orchestrator built on top of hannahanna"
+repository = "https://github.com/yourorg/hupasiya"
+license = "MIT"
+keywords = ["cli", "development", "git", "ai", "orchestration"]
+categories = ["command-line-utilities", "development-tools"]
+
+[[bin]]
+name = "hp"
+path = "src/main.rs"
+
+[dependencies]
+# CLI
+clap = { version = "4.5", features = ["derive", "env", "wrap_help"] }
+colored = "2.1"
+dialoguer = "0.11"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_yaml = "0.9"
+serde_json = "1.0"
+
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+
+# Error handling
+anyhow = "1.0"
+thiserror = "1.0"
+
+# Utilities
+uuid = { version = "1.6", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+which = "6.0"
+
+# GitHub API (for PR integration)
+octocrab = "0.32"
+
+# HTTP client (for template marketplace)
+reqwest = { version = "0.11", features = ["json"] }
+
+[dev-dependencies]
+tempfile = "3.8"
+assert_cmd = "2.0"
+predicates = "3.0"
+
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
