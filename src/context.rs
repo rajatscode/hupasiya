@@ -549,8 +549,8 @@ mod tests {
 
     #[test]
     fn test_init_context() {
-        let (manager, _temp) = create_test_manager();
-        let session = create_test_session();
+        let (manager, temp) = create_test_manager();
+        let session = create_test_session_with_context_dir(&temp.path().join("contexts"));
 
         manager.init_context(&session).unwrap();
 
@@ -578,8 +578,8 @@ mod tests {
 
     #[test]
     fn test_create_snapshot() {
-        let (manager, _temp) = create_test_manager();
-        let session = create_test_session();
+        let (manager, temp) = create_test_manager();
+        let session = create_test_session_with_context_dir(&temp.path().join("contexts"));
 
         manager.init_context(&session).unwrap();
 
@@ -650,11 +650,11 @@ mod tests {
 
     #[test]
     fn test_sync_context() {
-        let (manager, _temp) = create_test_manager();
-        let session1 = create_test_session();
-        let mut session2 = create_test_session();
+        let (manager, temp) = create_test_manager();
+        let session1 = create_test_session_with_context_dir(&temp.path().join("contexts"));
+        let mut session2 = create_test_session_with_context_dir(&temp.path().join("contexts"));
         session2.name = "test-session-2".to_string();
-        session2.context_dir = PathBuf::from(".hp/contexts/myrepo/test-session-2");
+        session2.context_dir = temp.path().join("contexts/test-session-2");
 
         manager.init_context(&session1).unwrap();
         manager.init_context(&session2).unwrap();

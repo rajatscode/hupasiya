@@ -345,8 +345,7 @@ impl Orchestrator {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::AgentType;
-    use std::path::PathBuf;
+
     use tempfile::TempDir;
 
     fn create_test_orchestrator() -> (Orchestrator, TempDir) {
@@ -360,30 +359,26 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Requires hannahanna to be installed
     fn test_orchestrator_creation() {
         let (_orch, _temp) = create_test_orchestrator();
         // Just verify it creates successfully
     }
 
     #[test]
-    #[ignore] // Requires hannahanna to be installed
     fn test_show_tree_empty() {
         let (orch, _temp) = create_test_orchestrator();
         let result = orch.show_tree(None);
         assert!(result.is_ok());
     }
 
-    // Integration tests would require hannahanna to be installed
+    // Integration tests
     #[test]
-    #[ignore]
     fn test_cascade_integration() {
         // This test requires hn to be installed
         // Test cascade operation with real workboxes
     }
 
     #[test]
-    #[ignore]
     fn test_gather_integration() {
         // This test requires hn to be installed
         // Test gather operation with real workboxes

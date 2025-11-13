@@ -22,6 +22,9 @@ jobs:
         with:
           components: rustfmt, clippy
 
+      - name: Install hannahanna
+        run: cargo install hannahanna
+
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -42,10 +45,6 @@ jobs:
 
       - name: Run tests
         run: cargo test --verbose
-
-      - name: Run tests (ignored)
-        run: cargo test --verbose -- --ignored
-        continue-on-error: true
 
   clippy:
     name: Clippy

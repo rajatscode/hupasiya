@@ -492,7 +492,7 @@ impl AiTool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::AgentType;
+
     use tempfile::TempDir;
 
     fn setup_test_env() -> (TempDir, Config) {
@@ -502,7 +502,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore] // Requires hannahanna to be installed
     fn test_ai_tool_creation() {
         let (_temp_dir, config) = setup_test_env();
         let ai_tool = AiTool::new(config);

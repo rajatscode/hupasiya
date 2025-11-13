@@ -265,7 +265,6 @@ mod tests {
 
     // Integration tests (require hn to be installed)
     #[test]
-    #[ignore] // Run with: cargo test --ignored
     fn test_create_and_remove_workbox() {
         let client = match HnClient::new() {
             Ok(c) => c,
@@ -306,7 +305,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_list_workboxes() {
         let client = match HnClient::new() {
             Ok(c) => c,
@@ -324,7 +322,6 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn test_exec_in_workbox() {
         let client = match HnClient::new() {
             Ok(c) => c,

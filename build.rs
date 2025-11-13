@@ -10,6 +10,24 @@ fn main() {
         return;
     }
 
+    // Check for hannahanna (hn) binary
+    let hn_available = Command::new("hn")
+        .arg("--version")
+        .output()
+        .map(|output| output.status.success())
+        .unwrap_or(false);
+
+    if !hn_available {
+        println!("cargo:warning=");
+        println!("cargo:warning=⚠️  hannahanna (hn) not found!");
+        println!("cargo:warning=");
+        println!("cargo:warning=hupasiya requires hannahanna to function.");
+        println!("cargo:warning=Install it with: cargo install hannahanna");
+        println!("cargo:warning=");
+        println!("cargo:warning=Some tests will fail without hannahanna installed.");
+        println!("cargo:warning=");
+    }
+
     // Check if we're in a git repository
     let git_dir = Path::new(".git");
     if !git_dir.exists() {
@@ -26,7 +44,9 @@ fn main() {
 
     match output {
         Ok(result) if result.status.success() => {
-            println!("cargo:warning=Git hooks configured successfully! Using .githooks directory.");
+            println!(
+                "cargo:warning=✓ Git hooks configured successfully! Using .githooks directory."
+            );
         }
         Ok(result) => {
             let stderr = String::from_utf8_lossy(&result.stderr);

@@ -79,7 +79,7 @@ mod tests {
     #[test]
     fn test_pr_manager_creation() {
         // Test that we can create a PR manager
-        let config = Config::default();
+        let _config = Config::default();
         // This will fail because HnClient::new() checks for hn binary
         // which is expected in development
     }
