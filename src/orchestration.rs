@@ -348,25 +348,39 @@ mod tests {
 
     use tempfile::TempDir;
 
-    fn create_test_orchestrator() -> (Orchestrator, TempDir) {
+    fn create_test_orchestrator() -> Result<(Orchestrator, TempDir)> {
         let temp_dir = TempDir::new().unwrap();
         let mut config = Config::default();
         config.hp.sessions.metadata_dir = temp_dir.path().join("sessions");
         config.hp.sessions.context_dir = temp_dir.path().join("contexts");
 
-        let orchestrator = Orchestrator::new(config).unwrap();
-        (orchestrator, temp_dir)
+        let orchestrator = Orchestrator::new(config)?;
+        Ok((orchestrator, temp_dir))
     }
 
     #[test]
     fn test_orchestrator_creation() {
-        let (_orch, _temp) = create_test_orchestrator();
-        // Just verify it creates successfully
+        match create_test_orchestrator() {
+            Ok((_orch, _temp)) => {
+                // Successfully created orchestrator
+            }
+            Err(Error::HnNotFound) => {
+                println!("Skipping: hn not installed");
+            }
+            Err(e) => panic!("Unexpected error: {}", e),
+        }
     }
 
     #[test]
     fn test_show_tree_empty() {
-        let (orch, _temp) = create_test_orchestrator();
+        let (orch, _temp) = match create_test_orchestrator() {
+            Ok(x) => x,
+            Err(Error::HnNotFound) => {
+                println!("Skipping: hn not installed");
+                return;
+            }
+            Err(e) => panic!("Unexpected error: {}", e),
+        };
         let result = orch.show_tree(None);
         assert!(result.is_ok());
     }

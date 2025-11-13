@@ -102,6 +102,12 @@ impl From<anyhow::Error> for Error {
     }
 }
 
+impl From<octocrab::Error> for Error {
+    fn from(err: octocrab::Error) -> Self {
+        Error::Other(format!("GitHub API error: {}", err))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

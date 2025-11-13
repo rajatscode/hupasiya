@@ -302,6 +302,7 @@ pub enum ActivityType {
     AiLaunched,
     CommitMade,
     PrCreated,
+    PrSynced,
     PrCommentReceived,
     ShepherdRun,
     Cascaded,
