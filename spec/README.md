@@ -92,8 +92,8 @@ hannahanna provides the infrastructure (isolated workboxes), hupasiya provides t
 
 ## Status
 
-**Current Version:** 0.1.0-dev
-**Status:** In Development
-**Target v0.1:** Basic session management, context management, hannahanna integration
+**Current Version:** 1.0.0
+**Status:** Production Ready ✅
+**Completed:** All features from v0.1 through v1.0 implemented and tested
 
-See [Roadmap](roadmap.md) for detailed version goals and milestones.
+See [Roadmap](roadmap.md) for detailed version goals and [CHANGELOG.md](../CHANGELOG.md) for release notes.

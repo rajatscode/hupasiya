@@ -1,13 +1,20 @@
 //! CLI commands implementation
 
+use crate::activity::ActivityManager;
 use crate::ai_tool::AiTool;
+use crate::collaboration::CollaborationManager;
 use crate::config::Config;
 use crate::context::ContextManager;
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::hn_client::{HnClient, WorkboxOptions};
 use crate::models::{AgentType, SessionStatus, SnapshotTrigger};
 use crate::orchestration::Orchestrator;
+use crate::pr::PrManager;
+use crate::profiles::ProfileManager;
 use crate::session::SessionManager;
+use crate::shepherd::Shepherd;
+use crate::templates::TemplateManager;
+use crate::utilities::UtilitiesManager;
 use colored::Colorize;
 use std::io::{self, Write};
 
@@ -416,6 +423,16 @@ pub fn cmd_version() -> Result<()> {
     Ok(())
 }
 
+/// Execute the 'tutorial' command
+pub fn cmd_tutorial(skip_intro: bool) -> Result<()> {
+    let config = Config::load()?;
+    let tutorial = crate::tutorial::Tutorial::new(config)?;
+
+    tutorial.run(skip_intro)?;
+
+    Ok(())
+}
+
 // Helper functions
 
 fn print_session_table(sessions: &[crate::models::Session]) -> Result<()> {
@@ -571,6 +588,223 @@ pub fn cmd_exec(
     let ai_tool = AiTool::new(config)?;
 
     ai_tool.exec(&session_name, command, cascade, tree)?;
+
+    Ok(())
+}
+
+// === PR Commands ===
+
+/// Execute 'pr create' command
+pub fn cmd_pr_create(
+    session_name: &str,
+    draft: bool,
+    reviewers: Option<Vec<String>>,
+    labels: Option<Vec<String>>,
+    from_context: bool,
+) -> Result<()> {
+    let config = Config::load()?;
+    let pr_mgr = PrManager::new(config)?;
+
+    let runtime = tokio::runtime::Runtime::new()
+        .map_err(|e| Error::Other(format!("Failed to create async runtime: {}", e)))?;
+    runtime.block_on(pr_mgr.create_pr(session_name, draft, reviewers, labels, from_context))?;
+
+    Ok(())
+}
+
+/// Execute 'pr sync' command
+pub fn cmd_pr_sync(session_name: &str, create_shepherd: bool) -> Result<()> {
+    let config = Config::load()?;
+    let pr_mgr = PrManager::new(config)?;
+
+    let runtime = tokio::runtime::Runtime::new()
+        .map_err(|e| Error::Other(format!("Failed to create async runtime: {}", e)))?;
+    runtime.block_on(pr_mgr.sync_pr(session_name, create_shepherd))?;
+
+    Ok(())
+}
+
+/// Execute 'pr status' command
+pub fn cmd_pr_status(session_name: &str) -> Result<()> {
+    let config = Config::load()?;
+    let pr_mgr = PrManager::new(config)?;
+
+    let runtime = tokio::runtime::Runtime::new()
+        .map_err(|e| Error::Other(format!("Failed to create async runtime: {}", e)))?;
+    runtime.block_on(pr_mgr.pr_status(session_name))?;
+
+    Ok(())
+}
+
+// === Shepherd Command ===
+
+/// Execute 'shepherd' command
+pub fn cmd_shepherd(
+    session_name: Option<String>,
+    batch: bool,
+    auto_fix: bool,
+    _status: bool,
+) -> Result<()> {
+    let config = Config::load()?;
+    let shepherd = Shepherd::new(config)?;
+
+    let session_name = get_session_name(session_name)?;
+
+    if batch {
+        shepherd.run_batch(&session_name, auto_fix)?;
+    } else {
+        shepherd.run_interactive(&session_name)?;
+    }
+
+    Ok(())
+}
+
+// === Activity Commands ===
+
+/// Execute 'activity show' command
+pub fn cmd_activity(session_name: &str, limit: Option<usize>) -> Result<()> {
+    let config = Config::load()?;
+    let activity_mgr = ActivityManager::new(config)?;
+
+    activity_mgr.show_activity(session_name, limit)?;
+
+    Ok(())
+}
+
+/// Execute 'activity metrics' command
+pub fn cmd_metrics(session_name: &str) -> Result<()> {
+    let config = Config::load()?;
+    let activity_mgr = ActivityManager::new(config)?;
+
+    activity_mgr.show_metrics(session_name)?;
+
+    Ok(())
+}
+
+/// Execute 'activity stats' command
+pub fn cmd_stats() -> Result<()> {
+    let config = Config::load()?;
+    let activity_mgr = ActivityManager::new(config)?;
+
+    activity_mgr.show_stats()?;
+
+    Ok(())
+}
+
+// === Template Commands ===
+
+/// Execute 'template list' command
+pub fn cmd_template_list() -> Result<()> {
+    let config = Config::load()?;
+    let template_mgr = TemplateManager::new(config)?;
+
+    template_mgr.list()?;
+
+    Ok(())
+}
+
+/// Execute 'template search' command
+pub fn cmd_template_search(query: &str) -> Result<()> {
+    let config = Config::load()?;
+    let template_mgr = TemplateManager::new(config)?;
+
+    template_mgr.search(query)?;
+
+    Ok(())
+}
+
+/// Execute 'template install' command
+pub fn cmd_template_install(source: &str, name: Option<String>) -> Result<()> {
+    let config = Config::load()?;
+    let template_mgr = TemplateManager::new(config)?;
+
+    template_mgr.install(source, name)?;
+
+    Ok(())
+}
+
+// === Collaboration Commands ===
+
+/// Execute 'collab handoff' command
+pub fn cmd_handoff(session_name: &str, to_user: &str, message: Option<String>) -> Result<()> {
+    let config = Config::load()?;
+    let collab_mgr = CollaborationManager::new(config)?;
+
+    collab_mgr.handoff(session_name, to_user, message)?;
+
+    Ok(())
+}
+
+/// Execute 'collab clone' command
+pub fn cmd_clone(source_name: &str, new_name: &str, diverge: bool) -> Result<()> {
+    let config = Config::load()?;
+    let collab_mgr = CollaborationManager::new(config)?;
+
+    collab_mgr.clone_session(source_name, new_name, diverge)?;
+
+    Ok(())
+}
+
+/// Execute 'collab merge' command
+pub fn cmd_merge(target_name: &str, source_names: Vec<String>, strategy: &str) -> Result<()> {
+    let config = Config::load()?;
+    let collab_mgr = CollaborationManager::new(config)?;
+
+    collab_mgr.merge_sessions(target_name, source_names, strategy)?;
+
+    Ok(())
+}
+
+// === Profile Commands ===
+
+/// Execute 'profile list' command
+pub fn cmd_profile_list() -> Result<()> {
+    let config = Config::load()?;
+    let profile_mgr = ProfileManager::new(config)?;
+
+    profile_mgr.list()?;
+
+    Ok(())
+}
+
+/// Execute 'profile show' command
+pub fn cmd_profile_show(profile_name: &str) -> Result<()> {
+    let config = Config::load()?;
+    let profile_mgr = ProfileManager::new(config)?;
+
+    profile_mgr.show(profile_name)?;
+
+    Ok(())
+}
+
+// === Utility Commands ===
+
+/// Execute 'util monitor' command
+pub fn cmd_monitor(watch: bool) -> Result<()> {
+    let config = Config::load()?;
+    let util_mgr = UtilitiesManager::new(config)?;
+
+    util_mgr.monitor(watch)?;
+
+    Ok(())
+}
+
+/// Execute 'util clean' command
+pub fn cmd_clean(older_than_days: u64, dry_run: bool, force: bool) -> Result<()> {
+    let config = Config::load()?;
+    let util_mgr = UtilitiesManager::new(config)?;
+
+    util_mgr.clean(older_than_days, dry_run, force)?;
+
+    Ok(())
+}
+
+/// Execute 'util leave' command
+pub fn cmd_leave(session_name: &str, archive: bool) -> Result<()> {
+    let config = Config::load()?;
+    let util_mgr = UtilitiesManager::new(config)?;
+
+    util_mgr.leave(session_name, archive)?;
 
     Ok(())
 }
