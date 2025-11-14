@@ -3,6 +3,9 @@
 //! This is the library crate for hupasiya, providing session management,
 //! context management, and hannahanna integration.
 
+// Allow dead code for v1.0 - some features are part of the public API or future features
+#![allow(dead_code)]
+
 pub mod activity;
 pub mod ai_tool;
 pub mod cli;

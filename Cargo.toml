@@ -14,8 +14,9 @@ name = "hp"
 path = "src/main.rs"
 
 [dependencies]
-# hannahanna (workbox manager)
-hannahanna = "0.6"
+# Note: hannahanna (hn) binary must be installed separately
+# The build script (build.rs) will automatically install it if missing
+# Install manually with: cargo install hannahanna
 
 # CLI
 clap = { version = "4.5", features = ["derive", "env", "wrap_help"] }
