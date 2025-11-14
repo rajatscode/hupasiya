@@ -9,6 +9,7 @@ mod activity;
 mod ai_tool;
 mod cli;
 mod collaboration;
+mod completions;
 mod config;
 mod context;
 mod error;
@@ -17,6 +18,7 @@ mod models;
 mod orchestration;
 mod pr;
 mod profiles;
+mod progress;
 mod session;
 mod shepherd;
 mod templates;
@@ -27,7 +29,7 @@ mod utilities;
 #[derive(Parser)]
 #[command(name = "hp")]
 #[command(author, version, about, long_about = None)]
-struct Cli {
+pub struct Cli {
     #[command(subcommand)]
     command: Commands,
 
@@ -224,6 +226,12 @@ enum Commands {
         /// Skip intro and jump to section selection
         #[arg(long)]
         skip_intro: bool,
+    },
+
+    /// Generate shell completion scripts
+    Completions {
+        /// Shell type (bash, zsh, fish)
+        shell: completions::CompletionShell,
     },
 
     /// Show version information
@@ -610,6 +618,8 @@ fn main() -> Result<()> {
         Commands::Doctor => cli::cmd_doctor(),
 
         Commands::Tutorial { skip_intro } => cli::cmd_tutorial(skip_intro),
+
+        Commands::Completions { shell } => completions::generate_completions(shell),
 
         Commands::Version => cli::cmd_version(),
     };

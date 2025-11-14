@@ -19,6 +19,7 @@ pub mod models;
 pub mod orchestration;
 pub mod pr;
 pub mod profiles;
+pub mod progress;
 pub mod session;
 pub mod shepherd;
 pub mod templates;

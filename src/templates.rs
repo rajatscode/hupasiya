@@ -2,10 +2,13 @@
 
 use crate::config::Config;
 use crate::error::{Error, Result};
+use crate::progress;
 use colored::Colorize;
+use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
+use std::time::{Duration, SystemTime};
 
 /// Template metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -18,10 +21,169 @@ pub struct TemplateMetadata {
     pub agent_types: Vec<String>,
 }
 
+/// Template search result from registry
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct TemplateSearchResult {
+    templates: Vec<TemplateMetadata>,
+}
+
+/// Template registry client
+struct TemplateRegistry {
+    registry_url: String,
+    client: Client,
+    cache_dir: PathBuf,
+}
+
+impl TemplateRegistry {
+    /// Create new registry client
+    fn new() -> Result<Self> {
+        let cache_dir = dirs::cache_dir()
+            .unwrap_or_else(|| PathBuf::from("."))
+            .join("hupasiya")
+            .join("templates");
+        fs::create_dir_all(&cache_dir)?;
+
+        let client = Client::builder()
+            .timeout(Duration::from_secs(10))
+            .build()
+            .map_err(|e| Error::Other(format!("Failed to create HTTP client: {}", e)))?;
+
+        Ok(Self {
+            registry_url: "https://hp-templates.dev".to_string(),
+            client,
+            cache_dir,
+        })
+    }
+
+    /// Search templates in registry
+    fn search(&self, query: &str) -> Result<Vec<TemplateMetadata>> {
+        let url = format!("{}/api/search?q={}", self.registry_url, query);
+
+        let spinner = progress::spinner("Searching registry...");
+        let result = match self.client.get(&url).send() {
+            Ok(response) if response.status().is_success() => {
+                let result: TemplateSearchResult = response
+                    .json()
+                    .map_err(|e| Error::Other(format!("Failed to parse search results: {}", e)))?;
+                progress::finish_success(&spinner, "Search complete");
+                Ok(result.templates)
+            }
+            Ok(response) => {
+                progress::finish_error(&spinner, "Registry error");
+                Err(Error::Other(format!(
+                    "Registry returned error: {}",
+                    response.status()
+                )))
+            }
+            Err(e) => {
+                // Registry unavailable - use local fallback
+                spinner.finish_and_clear();
+                eprintln!("{} Registry unavailable: {}", "⚠".yellow(), e);
+                eprintln!("{}", "  Falling back to local templates only".dimmed());
+                Ok(Vec::new())
+            }
+        };
+        result
+    }
+
+    /// Install template from registry
+    fn install(&self, name: &str, version: Option<&str>) -> Result<String> {
+        let version_str = version.unwrap_or("latest");
+        let url = format!(
+            "{}/api/templates/{}/{}",
+            self.registry_url, name, version_str
+        );
+
+        let spinner = progress::spinner(&format!("Downloading {} {}...", name, version_str));
+        let result = match self.client.get(&url).send() {
+            Ok(response) if response.status().is_success() => {
+                let content = response
+                    .text()
+                    .map_err(|e| Error::Other(format!("Failed to read template: {}", e)))?;
+
+                // Cache the template
+                let cache_path = self.cache_dir.join(format!("{}.md", name));
+                fs::write(&cache_path, &content)?;
+
+                progress::finish_success(&spinner, "Download complete");
+                Ok(content)
+            }
+            Ok(response) => {
+                progress::finish_error(&spinner, "Download failed");
+                Err(Error::Other(format!(
+                    "Failed to download template: {}",
+                    response.status()
+                )))
+            }
+            Err(e) => {
+                progress::finish_error(&spinner, "Registry unavailable");
+                Err(Error::Other(format!("Registry unavailable: {}", e)))
+            }
+        };
+        result
+    }
+
+    /// Publish template to registry
+    fn publish(&self, metadata: &TemplateMetadata, content: &str) -> Result<()> {
+        let url = format!("{}/api/publish", self.registry_url);
+
+        #[derive(Serialize)]
+        struct PublishRequest<'a> {
+            metadata: &'a TemplateMetadata,
+            content: &'a str,
+        }
+
+        let payload = PublishRequest { metadata, content };
+
+        let spinner = progress::spinner(&format!("Publishing {}...", metadata.name));
+        let result = match self.client.post(&url).json(&payload).send() {
+            Ok(response) if response.status().is_success() => {
+                progress::finish_success(&spinner, "Published successfully");
+                Ok(())
+            }
+            Ok(response) => {
+                progress::finish_error(&spinner, "Publish failed");
+                Err(Error::Other(format!(
+                    "Failed to publish template: {}",
+                    response.status()
+                )))
+            }
+            Err(e) => {
+                progress::finish_error(&spinner, "Registry unavailable");
+                Err(Error::Other(format!("Registry unavailable: {}", e)))
+            }
+        };
+        result
+    }
+
+    /// Check if cache is fresh (less than 1 hour old)
+    fn is_cache_fresh(&self, name: &str) -> bool {
+        let cache_path = self.cache_dir.join(format!("{}.md", name));
+
+        if let Ok(metadata) = fs::metadata(&cache_path) {
+            if let Ok(modified) = metadata.modified() {
+                if let Ok(elapsed) = SystemTime::now().duration_since(modified) {
+                    return elapsed < Duration::from_secs(3600); // 1 hour
+                }
+            }
+        }
+
+        false
+    }
+
+    /// Get template from cache
+    fn get_cached(&self, name: &str) -> Result<String> {
+        let cache_path = self.cache_dir.join(format!("{}.md", name));
+        fs::read_to_string(&cache_path)
+            .map_err(|e| Error::Other(format!("Cache read failed: {}", e)))
+    }
+}
+
 /// Template marketplace manager
 pub struct TemplateManager {
     config: Config,
     templates_dir: PathBuf,
+    registry: TemplateRegistry,
 }
 
 impl TemplateManager {
@@ -33,9 +195,12 @@ impl TemplateManager {
             .join("templates");
         fs::create_dir_all(&templates_dir)?;
 
+        let registry = TemplateRegistry::new()?;
+
         Ok(Self {
             config,
             templates_dir,
+            registry,
         })
     }
 
@@ -88,25 +253,80 @@ impl TemplateManager {
     pub fn install(&self, source: &str, name: Option<String>) -> Result<()> {
         println!("{} Installing template from {}", "→".cyan(), source);
 
-        // For now, just copy from local file
-        let source_path = PathBuf::from(source);
-        if !source_path.exists() {
-            return Err(Error::Other(format!(
-                "Template source not found: {}",
-                source
-            )));
-        }
+        let (content, template_name) = if source.starts_with("http://")
+            || source.starts_with("https://")
+        {
+            // Install from URL
+            let client = Client::builder()
+                .timeout(Duration::from_secs(30))
+                .build()
+                .map_err(|e| Error::Other(format!("HTTP client error: {}", e)))?;
 
-        let template_name = name.unwrap_or_else(|| {
-            source_path
-                .file_stem()
-                .unwrap()
-                .to_string_lossy()
-                .to_string()
-        });
+            let response = client
+                .get(source)
+                .send()
+                .map_err(|e| Error::Other(format!("Failed to download template: {}", e)))?;
 
+            if !response.status().is_success() {
+                return Err(Error::Other(format!(
+                    "Download failed with status: {}",
+                    response.status()
+                )));
+            }
+
+            let content = response
+                .text()
+                .map_err(|e| Error::Other(format!("Failed to read template content: {}", e)))?;
+
+            let name = name.ok_or_else(|| {
+                Error::InvalidInput("Template name required when installing from URL".to_string())
+            })?;
+
+            (content, name)
+        } else if source.contains('/') || source.contains('\\') || PathBuf::from(source).exists() {
+            // Install from local file
+            let source_path = PathBuf::from(source);
+            if !source_path.exists() {
+                return Err(Error::Other(format!("Template file not found: {}", source)));
+            }
+
+            let content = fs::read_to_string(&source_path)?;
+            let template_name = name.unwrap_or_else(|| {
+                source_path
+                    .file_stem()
+                    .unwrap()
+                    .to_string_lossy()
+                    .to_string()
+            });
+
+            (content, template_name)
+        } else {
+            // Install from registry by name
+            println!("{} Checking registry...", "→".dimmed());
+
+            let content = if self.registry.is_cache_fresh(source) {
+                println!("{} Using cached version", "→".dimmed());
+                self.registry.get_cached(source)?
+            } else {
+                match self.registry.install(source, None) {
+                    Ok(content) => {
+                        println!("{} Downloaded from registry", "→".dimmed());
+                        content
+                    }
+                    Err(e) => {
+                        eprintln!("{} Registry error: {}", "⚠".yellow(), e);
+                        return Err(e);
+                    }
+                }
+            };
+
+            let template_name = name.unwrap_or_else(|| source.to_string());
+            (content, template_name)
+        };
+
+        // Install to local templates directory
         let dest_path = self.templates_dir.join(format!("{}.md", template_name));
-        fs::copy(&source_path, &dest_path)?;
+        fs::write(&dest_path, &content)?;
 
         println!("{} Template installed: {}", "✓".green(), template_name);
         println!("   Path: {}", dest_path.display());
@@ -115,7 +335,7 @@ impl TemplateManager {
         Ok(())
     }
 
-    /// Publish template (stub for future implementation)
+    /// Publish template to registry
     pub fn publish(&self, template_name: &str) -> Result<()> {
         let template_path = self.templates_dir.join(format!("{}.md", template_name));
 
@@ -124,26 +344,51 @@ impl TemplateManager {
         }
 
         println!("{} Publishing template: {}", "→".cyan(), template_name);
-        println!();
-        println!("{}", "Publishing is not yet implemented.".yellow());
-        println!("Future: Templates will be published to a central registry.");
-        println!();
-        println!("For now, you can share templates by:");
-        println!("  1. Copying the file: {}", template_path.display());
-        println!("  2. Sharing via git repository");
-        println!("  3. Using a shared filesystem");
-        println!();
+
+        // Read template content
+        let content = fs::read_to_string(&template_path)?;
+
+        // Create metadata (in production, this would be parsed from frontmatter)
+        let metadata = TemplateMetadata {
+            name: template_name.to_string(),
+            author: "unknown".to_string(), // TODO: Get from git config
+            version: "1.0.0".to_string(),
+            description: content.lines().take(3).collect::<Vec<_>>().join(" "),
+            tags: vec![],
+            agent_types: vec![],
+        };
+
+        match self.registry.publish(&metadata, &content) {
+            Ok(()) => {
+                println!("{} Template published successfully!", "✓".green());
+                println!("   Name: {}", metadata.name);
+                println!("   Version: {}", metadata.version);
+                println!();
+            }
+            Err(e) => {
+                eprintln!("{} Failed to publish to registry: {}", "✗".red(), e);
+                eprintln!();
+                eprintln!("{}", "Alternative sharing methods:".yellow());
+                eprintln!("  1. Copy file: {}", template_path.display());
+                eprintln!("  2. Share via git repository");
+                eprintln!("  3. Use shared filesystem or cloud storage");
+                eprintln!("  4. Share raw URL (users can install with: hp template install <url>)");
+                eprintln!();
+                return Err(e);
+            }
+        }
 
         Ok(())
     }
 
-    /// Search templates (stub)
+    /// Search templates (local + registry)
     pub fn search(&self, query: &str) -> Result<()> {
         println!("{} Searching for: {}", "🔍".bold(), query);
         println!();
 
+        // Search local templates
         let custom_templates = self.list_custom_templates()?;
-        let results: Vec<_> = custom_templates
+        let local_results: Vec<_> = custom_templates
             .iter()
             .filter(|t| {
                 t.name.to_lowercase().contains(&query.to_lowercase())
@@ -154,10 +399,13 @@ impl TemplateManager {
             })
             .collect();
 
-        if results.is_empty() {
-            println!("  {}", "No templates found".yellow());
-        } else {
-            for meta in results {
+        // Search registry
+        let registry_results = self.registry.search(query).unwrap_or_default();
+
+        // Display results
+        if !local_results.is_empty() {
+            println!("{}:", "Local Templates".bold().cyan());
+            for meta in &local_results {
                 println!("  {} - {}", meta.name.cyan().bold(), meta.description);
                 println!("    Author: {} | Version: {}", meta.author, meta.version);
                 if !meta.tags.is_empty() {
@@ -165,6 +413,31 @@ impl TemplateManager {
                 }
                 println!();
             }
+        }
+
+        if !registry_results.is_empty() {
+            println!("{}:", "Registry Templates".bold().green());
+            for meta in &registry_results {
+                println!("  {} - {}", meta.name.green().bold(), meta.description);
+                println!("    Author: {} | Version: {}", meta.author, meta.version);
+                if !meta.tags.is_empty() {
+                    println!("    Tags: {}", meta.tags.join(", "));
+                }
+                if !meta.agent_types.is_empty() {
+                    println!("    Agent types: {}", meta.agent_types.join(", "));
+                }
+                println!(
+                    "    Install: {} {}",
+                    "hp template install".dimmed(),
+                    meta.name.dimmed()
+                );
+                println!();
+            }
+        }
+
+        if local_results.is_empty() && registry_results.is_empty() {
+            println!("  {}", "No templates found".yellow());
+            println!();
         }
 
         Ok(())
