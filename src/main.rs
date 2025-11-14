@@ -254,18 +254,34 @@ enum ContextSubcommand {
         session: Option<String>,
     },
 
-    /// Create a snapshot
+    /// Create or manage snapshots
     Snapshot {
-        /// Snapshot name
-        name: String,
-
         /// Session name (or use HP_SESSION env var)
-        #[arg(long)]
         session: Option<String>,
 
-        /// Description
+        /// Snapshot name (for create/restore)
+        name: Option<String>,
+
+        /// Description for new snapshot
         #[arg(long)]
         description: Option<String>,
+
+        /// List all snapshots
+        #[arg(long)]
+        list: bool,
+
+        /// Restore from snapshot
+        #[arg(long)]
+        restore: Option<String>,
+    },
+
+    /// Sync context between sessions
+    Sync {
+        /// Source session
+        from: String,
+
+        /// Target session
+        to: String,
     },
 }
 
@@ -436,6 +452,12 @@ enum ProfileSubcommand {
         /// Profile name
         name: String,
     },
+
+    /// Use a profile (set as default)
+    Use {
+        /// Profile name
+        name: String,
+    },
 }
 
 #[derive(Args)]
@@ -507,10 +529,13 @@ fn main() -> Result<()> {
             ContextSubcommand::View { session } => cli::cmd_context_view(session),
             ContextSubcommand::Edit { session } => cli::cmd_context_edit(session),
             ContextSubcommand::Snapshot {
-                name,
                 session,
+                name,
                 description,
-            } => cli::cmd_context_snapshot(session, name, description),
+                list,
+                restore,
+            } => cli::cmd_context_snapshot(session, name, description, list, restore),
+            ContextSubcommand::Sync { from, to } => cli::cmd_context_sync(&from, &to),
         },
 
         Commands::Cascade { parent, dry_run } => cli::cmd_cascade(&parent, dry_run),
@@ -599,6 +624,7 @@ fn main() -> Result<()> {
         Commands::Profile(profile) => match profile.command {
             ProfileSubcommand::List => cli::cmd_profile_list(),
             ProfileSubcommand::Show { name } => cli::cmd_profile_show(&name),
+            ProfileSubcommand::Use { name } => cli::cmd_profile_use(&name),
         },
 
         Commands::Util(util) => match util.command {

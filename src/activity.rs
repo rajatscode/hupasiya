@@ -173,7 +173,7 @@ mod tests {
 
     #[test]
     fn test_activity_manager_creation() {
-        let config = Config::default();
+        let (_temp_dir, config) = setup_test_env();
         match ActivityManager::new(config) {
             Ok(_) => {
                 // Successfully created
