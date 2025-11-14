@@ -181,6 +181,7 @@ impl TemplateRegistry {
 
 /// Template marketplace manager
 pub struct TemplateManager {
+    #[allow(dead_code)]
     config: Config,
     templates_dir: PathBuf,
     registry: TemplateRegistry,
@@ -351,7 +352,7 @@ impl TemplateManager {
         // Create metadata (in production, this would be parsed from frontmatter)
         let metadata = TemplateMetadata {
             name: template_name.to_string(),
-            author: "unknown".to_string(), // TODO: Get from git config
+            author: "code@rajats.site".to_string(),
             version: "1.0.0".to_string(),
             description: content.lines().take(3).collect::<Vec<_>>().join(" "),
             tags: vec![],
@@ -459,7 +460,11 @@ impl TemplateManager {
             if path.extension().and_then(|s| s.to_str()) == Some("md") {
                 // Try to parse metadata from template
                 if let Ok(content) = fs::read_to_string(&path) {
-                    let name = path.file_stem().unwrap().to_string_lossy().to_string();
+                    let name = path
+                        .file_stem()
+                        .and_then(|s| s.to_str())
+                        .map(|s| s.to_string())
+                        .unwrap_or_else(|| "unknown".to_string());
 
                     // Parse frontmatter if present (simple implementation)
                     let meta = TemplateMetadata {

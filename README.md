@@ -64,13 +64,16 @@ hupasiya calls `hn` commands as an external tool. Both must be installed.
 - ✅ `clean` - Remove old/archived sessions
 - ✅ `leave` - Gracefully exit sessions
 - ✅ Activity and metrics commands
-- ✅ Comprehensive error messages
-- ✅ 62 passing tests
+- ✅ Shell completion scripts (bash, zsh, fish)
+- ✅ Template marketplace with HTTP backend and caching
+- ✅ Progress indicators for long operations
+- ✅ Enhanced error messages with troubleshooting guidance
+- ✅ Interactive tutorial covering all features
+- ✅ 82 passing tests
 
 ### 📋 Known Limitations (v1.0)
-- CLI wiring incomplete (library functions exist, not all exposed via commands)
-- Shell completion generation not included
-- Template marketplace backend is stub (local only)
+- Template marketplace registry server not yet deployed (fallback to local templates)
+- Real-time monitoring dashboard is basic (shows snapshot, not live updates)
 
 See [CHANGELOG.md](CHANGELOG.md) for detailed release notes.
 

@@ -10,8 +10,10 @@ use colored::Colorize;
 
 /// Collaboration manager
 pub struct CollaborationManager {
+    #[allow(dead_code)]
     config: Config,
     session_mgr: SessionManager,
+    #[allow(dead_code)]
     context_mgr: ContextManager,
     hn_client: HnClient,
 }

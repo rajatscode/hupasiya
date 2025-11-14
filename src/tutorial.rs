@@ -10,6 +10,7 @@ use std::io::{self, Write};
 
 /// Tutorial manager
 pub struct Tutorial {
+    #[allow(dead_code)]
     config: Config,
 }
 

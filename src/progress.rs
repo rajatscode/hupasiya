@@ -11,7 +11,7 @@ pub fn spinner(msg: &str) -> ProgressBar {
         ProgressStyle::default_spinner()
             .tick_strings(&["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"])
             .template("{spinner:.cyan} {msg}")
-            .unwrap(),
+            .expect("Invalid spinner template - this is a bug"),
     );
     pb.set_message(msg.to_string());
     pb
@@ -23,7 +23,7 @@ pub fn progress_bar(len: u64, msg: &str) -> ProgressBar {
     pb.set_style(
         ProgressStyle::default_bar()
             .template("{msg} [{bar:40.cyan/blue}] {pos}/{len} {elapsed_precise}")
-            .unwrap()
+            .expect("Invalid progress bar template - this is a bug")
             .progress_chars("█▓▒░ "),
     );
     pb.set_message(msg.to_string());

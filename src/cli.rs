@@ -5,7 +5,7 @@ use crate::ai_tool::AiTool;
 use crate::collaboration::CollaborationManager;
 use crate::config::Config;
 use crate::context::ContextManager;
-use crate::error::Result;
+use crate::error::{Error, Result};
 use crate::hn_client::{HnClient, WorkboxOptions};
 use crate::models::{AgentType, SessionStatus, SnapshotTrigger};
 use crate::orchestration::Orchestrator;
@@ -605,9 +605,9 @@ pub fn cmd_pr_create(
     let config = Config::load()?;
     let pr_mgr = PrManager::new(config)?;
 
-    tokio::runtime::Runtime::new()
-        .unwrap()
-        .block_on(pr_mgr.create_pr(session_name, draft, reviewers, labels, from_context))?;
+    let runtime = tokio::runtime::Runtime::new()
+        .map_err(|e| Error::Other(format!("Failed to create async runtime: {}", e)))?;
+    runtime.block_on(pr_mgr.create_pr(session_name, draft, reviewers, labels, from_context))?;
 
     Ok(())
 }
@@ -617,9 +617,9 @@ pub fn cmd_pr_sync(session_name: &str, create_shepherd: bool) -> Result<()> {
     let config = Config::load()?;
     let pr_mgr = PrManager::new(config)?;
 
-    tokio::runtime::Runtime::new()
-        .unwrap()
-        .block_on(pr_mgr.sync_pr(session_name, create_shepherd))?;
+    let runtime = tokio::runtime::Runtime::new()
+        .map_err(|e| Error::Other(format!("Failed to create async runtime: {}", e)))?;
+    runtime.block_on(pr_mgr.sync_pr(session_name, create_shepherd))?;
 
     Ok(())
 }
@@ -629,9 +629,9 @@ pub fn cmd_pr_status(session_name: &str) -> Result<()> {
     let config = Config::load()?;
     let pr_mgr = PrManager::new(config)?;
 
-    tokio::runtime::Runtime::new()
-        .unwrap()
-        .block_on(pr_mgr.pr_status(session_name))?;
+    let runtime = tokio::runtime::Runtime::new()
+        .map_err(|e| Error::Other(format!("Failed to create async runtime: {}", e)))?;
+    runtime.block_on(pr_mgr.pr_status(session_name))?;
 
     Ok(())
 }

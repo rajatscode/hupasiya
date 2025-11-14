@@ -64,8 +64,8 @@ impl UtilitiesManager {
                         )
                     };
 
-                    let pr_str = if session.pr_number.is_some() {
-                        format!("#{}", session.pr_number.unwrap())
+                    let pr_str = if let Some(pr_number) = session.pr_number {
+                        format!("#{}", pr_number)
                     } else {
                         "-".to_string()
                     };

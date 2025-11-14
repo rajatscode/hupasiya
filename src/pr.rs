@@ -14,8 +14,10 @@ use std::env;
 
 /// PR manager for GitHub integration
 pub struct PrManager {
+    #[allow(dead_code)]
     config: Config,
     session_mgr: SessionManager,
+    #[allow(dead_code)]
     context_mgr: ContextManager,
     hn_client: HnClient,
 }
@@ -108,7 +110,12 @@ impl PrManager {
 
         // Update session with PR info
         session.pr_number = Some(pr_number);
-        session.pr_url = Some(pr.html_url.as_ref().unwrap().to_string());
+        let pr_url = pr
+            .html_url
+            .as_ref()
+            .ok_or_else(|| Error::Other("GitHub PR missing html_url".to_string()))?
+            .to_string();
+        session.pr_url = Some(pr_url.clone());
         session.pr_status = Some(if draft {
             PrStatus::Draft
         } else {
@@ -123,7 +130,7 @@ impl PrManager {
 
         println!();
         println!("{} PR created successfully!", "✓".green());
-        println!("  PR #{}: {}", pr_number, pr.html_url.unwrap());
+        println!("  PR #{}: {}", pr_number, pr_url);
         println!();
 
         Ok(pr_number)
@@ -205,7 +212,10 @@ impl PrManager {
         let pr_number = session
             .pr_number
             .ok_or_else(|| Error::Other("Session has no associated PR".to_string()))?;
-        let pr_url = session.pr_url.as_ref().unwrap();
+        let pr_url = session
+            .pr_url
+            .as_ref()
+            .ok_or_else(|| Error::Other("Session has no PR URL".to_string()))?;
 
         // Get GitHub token
         let github_token = env::var("GITHUB_TOKEN")
@@ -238,7 +248,12 @@ impl PrManager {
         println!("   URL: {}", pr_url);
         println!(
             "   State: {}",
-            format!("{:?}", pr.state.unwrap()).to_uppercase()
+            format!(
+                "{:?}",
+                pr.state
+                    .ok_or_else(|| Error::Other("PR missing state".to_string()))?
+            )
+            .to_uppercase()
         );
         println!(
             "   Created: {}",

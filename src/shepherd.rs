@@ -14,9 +14,12 @@ use std::fs;
 
 /// Shepherd workflow manager
 pub struct Shepherd {
+    #[allow(dead_code)]
     config: Config,
     session_mgr: SessionManager,
+    #[allow(dead_code)]
     context_mgr: ContextManager,
+    #[allow(dead_code)]
     pr_mgr: PrManager,
 }
 
@@ -63,7 +66,11 @@ impl Shepherd {
         );
         println!();
         println!("Session: {}", session.name.bold());
-        println!("PR: #{}", session.pr_number.unwrap().to_string().bold());
+        if let Some(pr_number) = session.pr_number {
+            println!("PR: #{}", pr_number.to_string().bold());
+        } else {
+            println!("PR: {}", "None".dimmed());
+        }
         println!("Unresolved comments: {}", session.unresolved_comments.len());
         println!();
 

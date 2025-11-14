@@ -3,10 +3,6 @@
 //! This is the library crate for hupasiya, providing session management,
 //! context management, and hannahanna integration.
 
-// Allow dead code and enum variant names during development
-#![allow(dead_code)]
-#![allow(clippy::enum_variant_names)]
-
 pub mod activity;
 pub mod ai_tool;
 pub mod cli;

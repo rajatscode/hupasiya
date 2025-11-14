@@ -1,7 +1,3 @@
-// Allow dead code and enum variant names during development
-#![allow(dead_code)]
-#![allow(clippy::enum_variant_names)]
-
 use anyhow::Result;
 use clap::{Args, Parser, Subcommand};
 
