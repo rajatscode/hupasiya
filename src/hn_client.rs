@@ -24,6 +24,7 @@ pub struct WorkboxOptions {
     pub extra_options: Vec<(String, String)>,
 }
 
+#[allow(dead_code)]
 impl HnClient {
     /// Create a new hannahanna client
     pub fn new() -> Result<Self> {
@@ -225,10 +226,12 @@ mod tests {
 
     #[test]
     fn test_workbox_options_builder() {
-        let mut opts = WorkboxOptions::default();
-        opts.from = Some("main".to_string());
-        opts.vcs = Some("git".to_string());
-        opts.no_branch = true;
+        let opts = WorkboxOptions {
+            from: Some("main".to_string()),
+            vcs: Some("git".to_string()),
+            no_branch: true,
+            ..Default::default()
+        };
 
         assert_eq!(opts.from, Some("main".to_string()));
         assert_eq!(opts.vcs, Some("git".to_string()));

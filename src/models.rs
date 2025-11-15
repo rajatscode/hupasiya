@@ -29,6 +29,7 @@ pub enum AgentType {
     Custom(String),
 }
 
+#[allow(dead_code)]
 impl AgentType {
     /// Parse agent type from string
     #[allow(clippy::should_implement_trait)]
@@ -163,6 +164,7 @@ pub struct Session {
     pub locked_by: Option<String>,
 }
 
+#[allow(dead_code)]
 impl Session {
     /// Create a new session
     #[allow(clippy::too_many_arguments)]
@@ -332,6 +334,7 @@ pub struct SessionMetrics {
     pub tokens_used: u64,
 }
 
+#[allow(dead_code)]
 impl SessionMetrics {
     /// Update metrics from git diff stats
     pub fn update_from_git_stats(&mut self, added: u32, removed: u32, files: u32) {
@@ -390,6 +393,7 @@ pub struct ReviewComment {
 
 /// Shepherd analysis of a PR comment
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub struct ShepherdAnalysis {
     /// Comment ID
     pub comment_id: u64,
@@ -442,6 +446,7 @@ impl ConfidenceLevel {
 
 /// Template metadata
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub struct Template {
     /// Template name
     pub name: String,
@@ -454,6 +459,7 @@ pub struct Template {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[allow(dead_code)]
 pub struct TemplateMetadata {
     /// Author
     pub author: String,

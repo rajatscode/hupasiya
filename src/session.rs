@@ -15,6 +15,7 @@ pub struct SessionManager {
     sessions_dir: PathBuf,
 }
 
+#[allow(dead_code)]
 impl SessionManager {
     /// Create a new session manager
     pub fn new(config: Config) -> Result<Self> {

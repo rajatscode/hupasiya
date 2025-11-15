@@ -292,8 +292,10 @@ pub fn cmd_context_edit(session_name: Option<String>) -> Result<()> {
 /// Execute the 'context snapshot' command
 pub fn cmd_context_snapshot(
     session_name: Option<String>,
-    snapshot_name: String,
+    snapshot_name: Option<String>,
     description: Option<String>,
+    list: bool,
+    restore: Option<String>,
 ) -> Result<()> {
     let config = Config::load()?;
     let session_mgr = SessionManager::new(config.clone())?;
@@ -302,19 +304,90 @@ pub fn cmd_context_snapshot(
     let name = get_session_name(session_name)?;
     let session = session_mgr.load_session(&name)?;
 
-    let snapshot = context_mgr.create_snapshot(
-        &session,
-        &snapshot_name,
-        SnapshotTrigger::Manual,
-        description,
-    )?;
+    // List snapshots
+    if list {
+        let snapshots = context_mgr.list_snapshots(&session)?;
+
+        println!();
+        println!("{} Snapshots for: {}", "📸".bold(), session.name.bold());
+        println!();
+
+        if snapshots.is_empty() {
+            println!("  {}", "No snapshots found".yellow());
+        } else {
+            for snapshot in snapshots {
+                println!("  {} {}", "•".cyan(), snapshot.name.bold());
+                println!(
+                    "    Created: {}",
+                    snapshot.timestamp.format("%Y-%m-%d %H:%M:%S")
+                );
+                println!("    Trigger: {:?}", snapshot.trigger);
+                if let Some(desc) = &snapshot.description {
+                    println!("    Description: {}", desc);
+                }
+                println!("    Path: {}", snapshot.path.display());
+                println!();
+            }
+        }
+
+        return Ok(());
+    }
+
+    // Restore snapshot
+    if let Some(restore_name) = restore {
+        context_mgr.restore_snapshot(&session, &restore_name)?;
+
+        println!(
+            "{} Restored snapshot '{}'",
+            "✓".green(),
+            restore_name.bold()
+        );
+
+        return Ok(());
+    }
+
+    // Create snapshot
+    if let Some(snap_name) = snapshot_name {
+        let snapshot = context_mgr.create_snapshot(
+            &session,
+            &snap_name,
+            SnapshotTrigger::Manual,
+            description,
+        )?;
+
+        println!(
+            "{} Snapshot '{}' created",
+            "✓".green(),
+            snapshot.name.bold()
+        );
+        println!("  Path: {}", snapshot.path.display());
+
+        return Ok(());
+    }
+
+    // If no flags provided, show usage
+    Err(Error::Other(
+        "Must provide snapshot name, --list, or --restore=<name>".to_string(),
+    ))
+}
+
+/// Execute the 'context sync' command
+pub fn cmd_context_sync(from_session: &str, to_session: &str) -> Result<()> {
+    let config = Config::load()?;
+    let session_mgr = SessionManager::new(config.clone())?;
+    let context_mgr = ContextManager::new(config)?;
+
+    let from = session_mgr.load_session(from_session)?;
+    let to = session_mgr.load_session(to_session)?;
+
+    context_mgr.sync_context(&from, &to)?;
 
     println!(
-        "{} Snapshot '{}' created",
+        "{} Synced context from '{}' to '{}'",
         "✓".green(),
-        snapshot.name.bold()
+        from_session.bold(),
+        to_session.bold()
     );
-    println!("  Path: {}", snapshot.path.display());
 
     Ok(())
 }
@@ -773,6 +846,16 @@ pub fn cmd_profile_show(profile_name: &str) -> Result<()> {
     let profile_mgr = ProfileManager::new(config)?;
 
     profile_mgr.show(profile_name)?;
+
+    Ok(())
+}
+
+/// Execute 'profile use' command
+pub fn cmd_profile_use(profile_name: &str) -> Result<()> {
+    let config = Config::load()?;
+    let profile_mgr = ProfileManager::new(config)?;
+
+    profile_mgr.use_profile(profile_name)?;
 
     Ok(())
 }

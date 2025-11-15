@@ -60,6 +60,7 @@ impl Config {
     }
 
     /// Get active profile configuration
+    #[allow(dead_code)]
     pub fn get_active_profile(&self) -> Option<&ProfileConfig> {
         self.hp.profiles.get(&self.hp.active_profile)
     }

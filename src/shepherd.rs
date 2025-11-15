@@ -23,6 +23,7 @@ pub struct Shepherd {
     pr_mgr: PrManager,
 }
 
+#[allow(dead_code)]
 impl Shepherd {
     /// Create new shepherd workflow manager
     pub fn new(config: Config) -> Result<Self> {
