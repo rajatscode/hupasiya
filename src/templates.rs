@@ -34,6 +34,7 @@ struct TemplateRegistry {
     cache_dir: PathBuf,
 }
 
+#[allow(dead_code)]
 impl TemplateRegistry {
     /// Create new registry client
     fn new() -> Result<Self> {
@@ -187,6 +188,7 @@ pub struct TemplateManager {
     registry: TemplateRegistry,
 }
 
+#[allow(dead_code)]
 impl TemplateManager {
     /// Create new template manager
     pub fn new(config: Config) -> Result<Self> {

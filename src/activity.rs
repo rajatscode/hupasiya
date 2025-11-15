@@ -146,7 +146,7 @@ impl ActivityManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::models::{ActivityEvent, ActivityType, AgentType, Session};
+    use crate::models::{ActivityType, AgentType, Session};
     use tempfile::TempDir;
 
     fn setup_test_env() -> (TempDir, Config) {

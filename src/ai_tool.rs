@@ -519,8 +519,8 @@ mod tests {
     #[test]
     fn test_resolve_session_name_with_explicit_name() {
         // Test without creating AiTool (which requires hn)
-        let session_name = Some("test-session".to_string());
-        assert_eq!(session_name.unwrap(), "test-session");
+        let session_name = "test-session".to_string();
+        assert_eq!(session_name, "test-session");
     }
 
     #[test]

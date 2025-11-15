@@ -507,6 +507,7 @@ const TEMPLATE_SHEPHERD: &str = r#"# Shepherd Session: {{session_name}}
 mod tests {
     use super::*;
     use crate::models::Session;
+    use std::path::Path;
     use tempfile::TempDir;
 
     fn create_test_manager() -> (ContextManager, TempDir) {
@@ -531,7 +532,7 @@ mod tests {
         )
     }
 
-    fn create_test_session_with_context_dir(context_base_dir: &PathBuf) -> Session {
+    fn create_test_session_with_context_dir(context_base_dir: &Path) -> Session {
         let mut session = Session::new(
             "test-session".to_string(),
             AgentType::Feature,

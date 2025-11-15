@@ -8,6 +8,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 
 /// Main error type for hupasiya
 #[derive(Error, Debug)]
+#[allow(dead_code)]
+#[allow(clippy::enum_variant_names)]
 pub enum Error {
     /// hannahanna not found
     #[error("hannahanna (hn) not found in PATH\n\nTo fix this issue:\n  1. Install hannahanna: cargo install hannahanna\n  2. Ensure it's in your PATH\n  3. Verify installation: hn --version")]
