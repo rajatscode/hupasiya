@@ -20,9 +20,9 @@ if ! cargo fmt -- --check; then
     exit 1
 fi
 
-# Run clippy (allow dead_code and enum_variant_names for v1.0 public API)
+# Run clippy (matching CI configuration)
 echo "Running clippy..."
-if ! cargo clippy -- -D warnings -A dead-code -A clippy::enum-variant-names; then
+if ! cargo clippy --all-targets --all-features -- -D warnings; then
     echo ""
     echo "Error: Clippy found issues."
     echo "Fix the issues or run 'cargo clippy --fix' to auto-fix some of them."

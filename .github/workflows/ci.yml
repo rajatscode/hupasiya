@@ -57,6 +57,9 @@ jobs:
         with:
           components: clippy
 
+      - name: Install hannahanna
+        run: cargo install hannahanna
+
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -100,6 +103,9 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
+
+      - name: Install hannahanna
+        run: cargo install hannahanna
 
       - name: Cache cargo registry
         uses: actions/cache@v4
